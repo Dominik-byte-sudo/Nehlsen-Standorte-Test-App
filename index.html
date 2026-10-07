@@ -164,6 +164,8 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,att
 const icon=L.divIcon({className:"",html:'<div class="pin"></div>',iconSize:[26,26],iconAnchor:[13,26]});
 const cluster=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:45});
 map.addLayer(cluster);
+async function loadCoords(){try{const r=await fetch("standorte.json",{cache:"no-cache"});if(!r.ok)return;const j=await r.json();
+  D.forEach(s=>{const c=j[s.co+"|"+s.name];if(c){s.lat=c[0];s.lng=c[1];s.marker.setLatLng(c);}});render();}catch(e){}}
 D.forEach(s=>{s.marker=L.marker([s.lat,s.lng],{icon,title:s.co+" – "+s.name,keyboard:true}).on("click",()=>openSheet(s));});
 
 function km(a,b){const R=6371,r=x=>x*Math.PI/180,dLa=r(b.lat-a.lat),dLo=r(b.lng-a.lng);
@@ -228,6 +230,7 @@ $("#nearBtn").onclick=()=>{
   },()=>{b.disabled=false;toast("Standort nicht verfügbar – bitte Freigabe erlauben.");},{enableHighAccuracy:true,timeout:10000});
 };
 render();
+loadCoords();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 </script>
 </body>

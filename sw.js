@@ -1,5 +1,5 @@
 // Service Worker: App laeuft auch bei schlechtem Netz. Version erhoehen, wenn index.html geaendert wird!
-const VERSION = "v1";
+const VERSION = "v2";
 const APP = "app-" + VERSION, TILES = "tiles-" + VERSION;
 const CORE = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 
