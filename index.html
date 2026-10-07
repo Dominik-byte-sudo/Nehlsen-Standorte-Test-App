@@ -1,237 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nehlsen Standorte</title>
-<meta name="theme-color" content="#00703c">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Standorte">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" href="icons/icon-192.png">
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{--green:#00703c;--green-d:#00552d;--ink:#1b2620;--mute:#5d6b63;--line:#e3e8e5;--bg:#f5f7f6}
-  *{box-sizing:border-box}
-  html,body{margin:0;height:100%;font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg)}
-  #app{display:flex;flex-direction:column;height:100%;max-width:520px;margin:0 auto;background:#fff;position:relative;overflow:hidden;box-shadow:0 0 30px rgba(0,0,0,.08)}
-  header{background:var(--green);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 16px 12px}
-  header h1{margin:0;font-size:18px;font-weight:700;letter-spacing:.2px}
-  header p{margin:2px 0 10px;font-size:12px;opacity:.85}
-  .searchrow{display:flex;gap:8px}
-  .search{flex:1;position:relative}
-  .search input{width:100%;border:0;border-radius:10px;padding:11px 12px 11px 36px;font:inherit;font-size:15px;outline:none}
-  .search input:focus{box-shadow:0 0 0 3px rgba(255,255,255,.5)}
-  .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mute)}
-  .btn{border:0;border-radius:10px;font:inherit;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
-  .btn:focus-visible{outline:3px solid #ffd54a;outline-offset:2px}
-  .near{background:#fff;color:var(--green);padding:0 12px;font-size:13px;white-space:nowrap}
-  .near:disabled{opacity:.6;cursor:wait}
-  .tabs{display:flex;border-bottom:1px solid var(--line)}
-  .tabs button{flex:1;background:none;border:0;padding:11px;font:inherit;font-weight:600;font-size:14px;color:var(--mute);cursor:pointer;border-bottom:3px solid transparent}
-  .tabs button[aria-selected=true]{color:var(--green);border-color:var(--green)}
-  main{flex:1;position:relative;min-height:0}
-  #map,#list{position:absolute;inset:0}
-  #list{overflow-y:auto;background:#fff}
-  .hidden{display:none!important}
-  .item{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:13px 16px;font:inherit;cursor:pointer}
-  .item:hover,.item:focus-visible{background:#f0f6f2;outline:none}
-  .item b{display:block;font-size:14px;font-weight:600}
-  .item span{display:block;font-size:13px;color:var(--mute);margin-top:2px}
-  .dist{float:right;font-size:12px;font-weight:600;color:var(--green);background:#e6f2ec;padding:2px 7px;border-radius:20px;margin-left:8px}
-  .empty{padding:40px 24px;text-align:center;color:var(--mute);font-size:14px}
-  .toast{position:absolute;left:12px;right:12px;top:12px;z-index:1000;background:#1b2620;color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;transition:opacity .3s}
-  /* Bottom sheet */
-  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:1001;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.18);padding:10px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .28s ease;max-height:70%;overflow-y:auto}
-  .sheet.open{transform:none}
-  .grab{width:40px;height:4px;border-radius:4px;background:#cfd6d2;margin:0 auto 12px}
-  .sheet h2{margin:0 30px 4px 0;font-size:17px;line-height:1.3}
-  .co{font-size:12px;color:var(--green);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
-  .close{position:absolute;right:12px;top:12px;background:#eef1ef;width:32px;height:32px;border-radius:50%;color:var(--ink);font-size:18px}
-  .row{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;align-items:flex-start}
-  .row:first-of-type{border-top:0}
-  .row svg{flex:none;color:var(--green);margin-top:2px}
-  .row a{color:var(--ink)}
-  .hours{white-space:pre-line}
-  .actions{display:flex;gap:8px;margin-top:14px}
-  .primary{flex:1;background:var(--green);color:#fff;padding:13px;font-size:15px;text-decoration:none}
-  .primary:hover{background:var(--green-d)}
-  .secondary{background:#eef1ef;color:var(--ink);padding:13px 14px;font-size:15px;text-decoration:none}
-  .leaflet-container{font-family:inherit}
-  .pin{background:var(--green);width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
-  .me{width:16px;height:16px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 6px rgba(26,115,232,.25)}
-  .marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(0,112,60,.25)!important}
-  .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:var(--green)!important;color:#fff!important;font-weight:700}
-  @media (prefers-reduced-motion:reduce){.sheet,.toast{transition:none}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#00703c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Standorte">
+  <meta name="description" content="Standorte der Nehlsen-Gruppe auf einer Karte">
+  <title>Nehlsen Standorte</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="vendor/MarkerCluster.css">
+  <link rel="stylesheet" href="vendor/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-<div id="app">
-  <header>
-    <h1>Nehlsen Standorte</h1>
-    <p id="count">Prototyp · interne Nutzung</p>
-    <div class="searchrow">
-      <label class="search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="q" type="search" placeholder="Ort, PLZ oder Gesellschaft …" aria-label="Standorte durchsuchen" autocomplete="off">
-      </label>
-      <button class="btn near" id="nearBtn" aria-label="Standorte in meiner Nähe">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></svg>
-        In der Nähe
-      </button>
+  <div id="app">
+    <header>
+      <h1>Nehlsen Standorte</h1>
+      <p id="count" aria-live="polite">Standorte werden geladen …</p>
+      <div class="searchrow">
+        <label class="search">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" type="search" placeholder="Ort, PLZ oder Gesellschaft …" aria-label="Standorte durchsuchen" autocomplete="off">
+        </label>
+        <button class="btn near" id="nearBtn" type="button" aria-label="Standorte in meiner Nähe">
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></svg>
+          In der Nähe
+        </button>
+      </div>
+    </header>
+    <div class="tabs" role="tablist" aria-label="Ansicht auswählen">
+      <button role="tab" id="tMap" type="button" aria-selected="true" aria-controls="map" tabindex="0">Karte</button>
+      <button role="tab" id="tList" type="button" aria-selected="false" aria-controls="list" tabindex="-1">Liste</button>
     </div>
-  </header>
-  <div class="tabs" role="tablist">
-    <button role="tab" id="tMap" aria-selected="true">Karte</button>
-    <button role="tab" id="tList" aria-selected="false">Liste</button>
+    <main>
+      <div id="map" role="region" aria-label="Karte mit Nehlsen-Standorten"></div>
+      <div id="list" class="hidden" role="list" aria-label="Nehlsen-Standorte"></div>
+      <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+    </main>
+    <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sTitle" aria-hidden="true" inert>
+      <div class="grab" aria-hidden="true"></div>
+      <button class="btn close" id="sClose" type="button" aria-label="Schließen">×</button>
+      <div id="sBody"></div>
+    </section>
   </div>
-  <main>
-    <div id="map" role="region" aria-label="Karte"></div>
-    <div id="list" class="hidden" role="list"></div>
-    <div id="toast" class="toast hidden" role="status"></div>
-  </main>
-  <section class="sheet" id="sheet" aria-hidden="true" role="dialog" aria-labelledby="sTitle">
-    <div class="grab"></div>
-    <button class="btn close" id="sClose" aria-label="Schließen">×</button>
-    <div id="sBody"></div>
-  </section>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script>
-// Quelle: nehlsen.com/standorte (Stand 07.10.2026). Koordinaten sind ungefähr – vor Produktivbetrieb per Geocoding prüfen!
-const D = [
- ["Nehlsen Berlin-Brandenburg","Standort Neuenhagen","Zum Mühlenfließ 14, 15366 Neuenhagen","03342 42475-0","info.sva@nehlsen.com","Mo–Fr 7.00–15.00",52.531,13.680],
- ["Karl Nehlsen","Standort Bremen","Hüttenstraße 5, 28237 Bremen","0421 6266-5333","info.karl@nehlsen.com","Mo–Do 7.30–17.00\nFr 7.30–15.00",53.118,8.700],
- ["Karl Nehlsen","BS Bremer Recycling Kontor","Riespot 6, 28237 Bremen","0421 6266-5480","info@bremer-recycling-kontor.de","Mo–Fr 7.00–17.00",53.123,8.688],
- ["Karl Nehlsen","Recycling Anlage Bremen","Fahrwiesendamm 100, 28219 Bremen","0421 380238-10","auftrag.karlnehlsen@nehlsen.com","Mo–Fr 7.00–17.00",53.138,8.735],
- ["Karl Nehlsen","Standort Bremerhaven","Brückenstr. 25, 27568 Bremerhaven","0471 9413586","waste@nehlsen.com","Mo–Do 8.00–17.00\nFr 8.00–15.00",53.512,8.590],
- ["Karl Nehlsen","Standort Delmenhorst","Steller Straße 44, 27755 Delmenhorst","04221 91644-0","info.delmenhorst@nehlsen.com","Mo–Do 7.00–17.00\nFr 7.00–16.00",53.045,8.655],
- ["Karl Nehlsen","Standort Langwedel","Roggenkamp 2, 27299 Langwedel","04232 9317-0","info.langwedel@nehlsen.com","Mo–Do 7.00–16.45\nFr 7.00–15.45",52.995,9.180],
- ["Karl Nehlsen","Standort Loxstedt","Rudolf-Diesel-Str. 2, 27612 Loxstedt","04744 92950","info.loxstedt@nehlsen.com","Mo–Do 8.00–12.00 & 13.00–17.00\nFr 8.00–15.00",53.470,8.650],
- ["Kompostierung Nord","Standort Bremen","Fahrwiesendamm 100, 28219 Bremen","0421 618 92 93","info@kno-bremen.de","Mo–Fr 7.30–16.00\nSa 8.00–13.00",53.1395,8.7375],
- ["Nehlsen AWG","Standort Oldenburg","Am Schulgraben 11, 26135 Oldenburg","0441 92090-10","AbwassertechnikOL@nehlsen.com","Mo–Do 7.00–16.00\nFr 7.00–13.00",53.155,8.240],
- ["Nehlsen AWG","Standort Varel","Gewerbestraße 3, 26316 Varel","04451 9112-0","sbk.awg@nehlsen.com","Mo–Do 7.00–16.00\nFr 7.00–13.00",53.390,8.135],
- ["Nehlsen AWG","Standort Wangerland-Wiefels","Fuhlrieger Allee 2, 26434 Wangerland-Wiefels","04461 9987-0","info.awg@nehlsen.com","Mo–Do 8.00–17.00\nFr 8.00–14.00",53.627,7.975],
- ["Nehlsen AWG","Standort Wilhelmshaven","Krabbenweg 5, 26388 Wilhelmshaven","04421 95580","info.awg@nehlsen.com","Mo–Do 6.00–17.00\nFr 6.00–15.00",53.555,8.095],
- ["Nehlsen AWG","Wilhelmshaven – Kanal & Abwasser","Krabbenweg 5, 26388 Wilhelmshaven","+49 421 6266-284","auftrag.kanal@nehlsen.com","Mo–Do 7.00–17.00\nFr 7.00–16.00",53.5552,8.0953],
- ["Nehlsen Berlin-Brandenburg","Standort Mittenwalde","Dahmestraße 15, 15749 Mittenwalde","033764 883-0","info.berlin-brandenburg@nehlsen.com","Mo–Fr 7.00–15.00",52.268,13.540],
- ["Nehlsen Cloppenburg","Standort Cappeln","In der Riede 3, 49692 Cappeln","04471 184320","info.cappeln@nehlsen.com","Mo–Do 7.00–17.00\nFr 7.00–16.00",52.815,8.110],
- ["Nehlsen Cloppenburg","Standort Lohne","Krimpenforter Berg 10, 49393 Lohne","04442 4874","info.lohne@nehlsen.com","Mo–Fr 8.00–12.00",52.650,8.255],
- ["Nehlsen Cohrs","Standort Schneverdingen","Hamburger Str. 902, 29640 Schneverdingen","05199-324","info.cohrs@nehlsen.com","Mo–Do 8.00–15.30\nFr 8.00–13.00",53.140,9.810],
- ["Nehlsen Cohrs","Standort Soltau","Willinger Weg 3a, 29614 Soltau","05191 9685-0","info.cohrs@nehlsen.com","Mo–Fr 7.00–16.00",52.985,9.835],
- ["Nehlsen Cohrs","Standort Visselhövede","Im Gewerbepark 11, 27374 Visselhövede","04262-577","info.cohrs@nehlsen.com","Mo–Do 7.00–17.00\nFr 7.00–16.00",52.985,9.590],
- ["Nehlsen Consulting","Standort Bremen","Wilhelm-Karmann-Str. 5, 28237 Bremen","0421 84482-2555","info.consulting@nehlsen.com","Mo–Do 8.00–17.00\nFr 8.00–16.00",53.112,8.700],
- ["Nehlsen E. Heeren","Standort Emden","Zu den Hafenbecken 18, 26723 Emden","04921 20216","info.e.heeren@nehlsen.com","Mo–Do 7.30–16.00\nFr 7.30–13.00",53.345,7.190],
- ["Nehlsen E. Heeren","Standort Leer","Sägemühlenstr. 102, 26789 Leer","0491 92807-0","info.e.heeren@nehlsen.com","Mo–Fr 8.00–16.00",53.220,7.440],
- ["Nehlsen Industrieservice","Abfallbehandlung Reitbrake","Reitbrake 6, 28239 Bremen","0421 643 68-12","sonderabfall@nehlsen.com","Mo–Do 8.00–12.00 (nur mit tel. Anmeldung)",53.130,8.700],
- ["Nehlsen Industrieservice","Bremen Kap-Horn-Str. 5","Kap-Horn-Straße 5, 28237 Bremen","0421 6266 200","sonderabfall@nehlsen.com","Mo–Do 7.00–17.00\nFr 7.00–16.00",53.120,8.705],
- ["Nehlsen Industrieservice","Standort Bremen","Louis-Krages-Straße 10, 28237 Bremen","0421 6266 200","sonderabfall@nehlsen.com","Mo–Do 7.00–18.00\nFr 7.00–16.00",53.122,8.695],
- ["Nehlsen Industrieservice","Abfallbehandlung Strotthoffkai","Strotthoffkai 18, 28309 Bremen","0421 6266 200","sonderabfall@nehlsen.com","Mo–Do 7.00–15.00\nFr 7.00–14.30",53.050,8.870],
- ["Nehlsen Industrieservice","Bremen Kap-Horn-Str. 3 (Kanal)","Kap-Horn-Str. 3, 28237 Bremen","+49 421 6266-284","auftrag.kanal@nehlsen.com","Mo–Do 7.00–17.00\nFr 7.00–16.00",53.1205,8.7055],
- ["Nehlsen MV","Standort Anklam","Industriestr. 10, 17389 Anklam","03971 211404","info.mv.anklam@nehlsen.com","Mo–Fr 7.15–16.00",53.865,13.700],
- ["Nehlsen MV","Standort Faulenrost","Dorfstraße, 17139 Faulenrost","039951 2239","info.mv.faulenrost@nehlsen.com","Mo–Fr 7.00–16.00",53.635,12.835],
- ["Nehlsen MV","Betriebsstätte Neubrandenburg","Gewerbepark 10-11, 17039 Trollenhagen-Hellfeld","0395 42987-0","info.mv.neubrandenburg@nehlsen.com","Mo–Fr 7.00–16.00",53.600,13.290],
- ["Nehlsen MV","Standort Ribnitz-Damgarten","An der Mühle 11, 18311 Ribnitz-Damgarten","03821 7116-0","info.mv.ribnitz@nehlsen.com","Mo–Fr 7.00–16.00",54.240,12.440],
- ["Nehlsen MV","Standort Samtens","Muhlitzer Str. 4, 18573 Samtens","038306 152-0","info.mv.ruegen@nehlsen.com","Mo–Do 8.00–17.00\nFr 8.00–16.30",54.355,13.290],
- ["Nehlsen MV","Standort Stralsund","Voigdehäger Weg 60, 18439 Stralsund","03831 28485-0","info.mv.stralsund@nehlsen.com","Mo–Mi 7.00–17.00\nDo 7.00–18.00\nFr 7.00–17.00",54.300,13.050],
- ["Nehlsen Ostfriesland","Standort Südbrookmerland","Gewerbestraße 33, 26624 Südbrookmerland","04942 9197-0","info.ostfriesland@nehlsen.com","Mo–Fr 7.00–16.30",53.470,7.335],
- ["Nehlsen Ostfriesland","Standort Westoverledingen","Deponiestraße 3, 26810 Westoverledingen","04955 92901-0","info.breinermoor@nehlsen.com","Mo–Fr 7.00–17.30",53.150,7.420],
- ["Nehlsen Ostfriesland","WVZ Gewerbewertstoffhof","Gewerbestraße 24, 26624 Südbrookmerland","04942 91970","info.ostfriesland@nehlsen.com","Mo–Fr 7.00–16.30",53.4705,7.338],
- ["Nehlsen Sachsen","Standort Dresden","Pforzheimer Straße 1, 01189 Dresden","0800 44 55 455","info.sachsen@nehlsen.com","Mo–Fr 7.00–17.30",51.005,13.700],
- ["Nehlsen Sachsen","Standort Kamenz","Neschwitzer Straße 66, 01917 Kamenz","03578 34020","info.sachsen@nehlsen.com","Mo–Fr 7.00–17.00",51.280,14.120],
- ["Nehlsen Sachsen","Standort Meißen-Niederau","Radeburger Straße 65, 01689 Meißen-Niederau","03521 7654-0","info.sachsen@nehlsen.com","Mo–Fr 7.00–17.00",51.170,13.540],
- ["Nehlsen Sachsen","Standort Radebeul","Gartenstr. 38, 01445 Radebeul","0351 83188-0","info.radebeul@nehlsen.com","Mo–Fr 7.00–17.00",51.105,13.665],
- ["Nehlsen Sachsen","Standort Zwickau","Saarstraße 10, 08056 Zwickau","03521 7654 260","info.sachsen@nehlsen.com","Mo–Fr 7.00–17.00",50.740,12.480],
- ["Nehlsen Stoffstrom","Standort Bremen","Wilhelm-Karmann-Str. 5, 28237 Bremen","0421 84482-2000","info.stoffstrom@nehlsen.com","Mo–Do 8.00–17.00\nFr 8.00–16.00",53.1122,8.7005]
-].map((r,i)=>({id:i,co:r[0],name:r[1],addr:r[2],tel:r[3],mail:r[4],hours:r[5],lat:r[6],lng:r[7]}));
-
-const $=s=>document.querySelector(s);
-const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let me=null, meMarker=null, query="";
-
-const map=L.map("map",{zoomControl:false}).setView([52.9,10.5],6);
-L.control.zoom({position:"bottomright"}).addTo(map);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
-const icon=L.divIcon({className:"",html:'<div class="pin"></div>',iconSize:[26,26],iconAnchor:[13,26]});
-const cluster=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:45});
-map.addLayer(cluster);
-async function loadCoords(){try{const r=await fetch("standorte.json",{cache:"no-cache"});if(!r.ok)return;const j=await r.json();
-  D.forEach(s=>{const c=j[s.co+"|"+s.name];if(c){s.lat=c[0];s.lng=c[1];s.marker.setLatLng(c);}});render();}catch(e){}}
-D.forEach(s=>{s.marker=L.marker([s.lat,s.lng],{icon,title:s.co+" – "+s.name,keyboard:true}).on("click",()=>openSheet(s));});
-
-function km(a,b){const R=6371,r=x=>x*Math.PI/180,dLa=r(b.lat-a.lat),dLo=r(b.lng-a.lng);
-  const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
-function filtered(){
-  const q=query.toLowerCase().trim();
-  let r=D.filter(s=>!q||(s.co+" "+s.name+" "+s.addr).toLowerCase().includes(q));
-  if(me){r.forEach(s=>s.d=km(me,s));r.sort((a,b)=>a.d-b.d);}
-  return r;
-}
-function render(){
-  const r=filtered();
-  cluster.clearLayers();cluster.addLayers(r.map(s=>s.marker));
-  $("#count").textContent=`${r.length} von ${D.length} Standorten · intern`;
-  $("#list").innerHTML=r.length?r.map(s=>`<button class="item" role="listitem" data-id="${s.id}">
-    ${me?`<span class="dist">${s.d<10?s.d.toFixed(1):Math.round(s.d)} km</span>`:""}
-    <b>${esc(s.co)} · ${esc(s.name)}</b><span>${esc(s.addr)}</span></button>`).join("")
-    :`<div class="empty">Kein Standort gefunden für „${esc(query)}“.</div>`;
-  if(r.length&&query) map.fitBounds(L.latLngBounds(r.map(s=>[s.lat,s.lng])),{padding:[40,40],maxZoom:13});
-}
-$("#list").addEventListener("click",e=>{const b=e.target.closest(".item");if(!b)return;const s=D[b.dataset.id];showTab("map");map.setView([s.lat,s.lng],14);openSheet(s);});
-
-const ic={pin:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>',
- tel:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>',
- mail:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>',
- clock:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>'};
-function openSheet(s){
-  const dest=encodeURIComponent(s.addr);
-  $("#sBody").innerHTML=`<div class="co">${esc(s.co)}</div><h2 id="sTitle">${esc(s.name)}</h2>
-   ${me?`<div style="font-size:13px;color:var(--mute);margin-bottom:6px">ca. ${Math.round(km(me,s))} km Luftlinie entfernt</div>`:""}
-   <div class="row">${ic.pin}<span>${esc(s.addr)}</span></div>
-   <div class="row">${ic.tel}<a href="tel:${s.tel.replace(/[^\d+]/g,"")}">${esc(s.tel)}</a></div>
-   <div class="row">${ic.mail}<a href="mailto:${esc(s.mail)}">${esc(s.mail)}</a></div>
-   <div class="row">${ic.clock}<span class="hours">${esc(s.hours)}</span></div>
-   <div class="actions">
-     <a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${dest}">Route starten</a>
-     <a class="btn secondary" target="_blank" rel="noopener" href="https://maps.apple.com/?daddr=${dest}" aria-label="Route in Apple Karten">Apple</a>
-   </div>`;
-  $("#sheet").classList.add("open");$("#sheet").setAttribute("aria-hidden","false");$("#sClose").focus();
-}
-function closeSheet(){$("#sheet").classList.remove("open");$("#sheet").setAttribute("aria-hidden","true");}
-$("#sClose").onclick=closeSheet;map.on("click",closeSheet);
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet();});
-
-function showTab(t){const m=t==="map";$("#map").classList.toggle("hidden",!m);$("#list").classList.toggle("hidden",m);
-  $("#tMap").setAttribute("aria-selected",m);$("#tList").setAttribute("aria-selected",!m);if(m)setTimeout(()=>map.invalidateSize(),0);else closeSheet();}
-$("#tMap").onclick=()=>showTab("map");$("#tList").onclick=()=>showTab("list");
-
-let t;$("#q").addEventListener("input",e=>{clearTimeout(t);t=setTimeout(()=>{query=e.target.value;render();},200);});
-
-function toast(msg){const el=$("#toast");el.textContent=msg;el.classList.remove("hidden");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.add("hidden"),3500);}
-$("#nearBtn").onclick=()=>{
-  if(!navigator.geolocation)return toast("Standortbestimmung wird nicht unterstützt.");
-  const b=$("#nearBtn");b.disabled=true;
-  navigator.geolocation.getCurrentPosition(p=>{
-    b.disabled=false;me={lat:p.coords.latitude,lng:p.coords.longitude};
-    if(meMarker)meMarker.remove();
-    meMarker=L.marker([me.lat,me.lng],{icon:L.divIcon({className:"",html:'<div class="me"></div>',iconSize:[22,22]})}).addTo(map);
-    render();const n=filtered().slice(0,3);
-    map.fitBounds(L.latLngBounds([[me.lat,me.lng],...n.map(s=>[s.lat,s.lng])]),{padding:[50,50]});
-    toast(`Nächster Standort: ${n[0].co} ${n[0].name} (${Math.round(n[0].d)} km)`);showTab("list");
-  },()=>{b.disabled=false;toast("Standort nicht verfügbar – bitte Freigabe erlauben.");},{enableHighAccuracy:true,timeout:10000});
-};
-render();
-loadCoords();
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
-</script>
+  <script src="vendor/leaflet.js"></script>
+  <script src="vendor/leaflet.markercluster.js"></script>
+  <script type="module" src="./js/app.js"></script>
 </body>
 </html>

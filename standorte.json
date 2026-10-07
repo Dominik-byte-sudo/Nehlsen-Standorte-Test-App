@@ -1,174 +1,475 @@
-{
- "Nehlsen Berlin-Brandenburg|Standort Neuenhagen": [
-  52.532866,
-  13.712643
- ],
- "Karl Nehlsen|Standort Bremen": [
-  53.128387,
-  8.713471
- ],
- "Karl Nehlsen|BS Bremer Recycling Kontor": [
-  53.126972,
-  8.710546
- ],
- "Karl Nehlsen|Recycling Anlage Bremen": [
-  53.119433,
-  8.802753
- ],
- "Karl Nehlsen|Standort Bremerhaven": [
-  53.572452,
-  8.557943
- ],
- "Karl Nehlsen|Standort Delmenhorst": [
-  53.015765,
-  8.659705
- ],
- "Karl Nehlsen|Standort Langwedel": [
-  52.983281,
-  9.179951
- ],
- "Karl Nehlsen|Standort Loxstedt": [
-  53.475268,
-  8.655986
- ],
- "Kompostierung Nord|Standort Bremen": [
-  53.119433,
-  8.802753
- ],
- "Nehlsen AWG|Standort Oldenburg": [
-  53.104863,
-  8.267622
- ],
- "Nehlsen AWG|Standort Varel": [
-  53.397067,
-  8.112878
- ],
- "Nehlsen AWG|Standort Wangerland-Wiefels": [
-  53.588826,
-  7.866111
- ],
- "Nehlsen AWG|Standort Wilhelmshaven": [
-  53.570747,
-  8.105797
- ],
- "Nehlsen AWG|Wilhelmshaven – Kanal & Abwasser": [
-  53.570756,
-  8.105797
- ],
- "Nehlsen Berlin-Brandenburg|Standort Mittenwalde": [
-  52.257769,
-  13.563393
- ],
- "Nehlsen Cloppenburg|Standort Cappeln": [
-  52.813639,
-  8.021321
- ],
- "Nehlsen Cloppenburg|Standort Lohne": [
-  52.684888,
-  8.267939
- ],
- "Nehlsen Cohrs|Standort Schneverdingen": [
-  53.04805,
-  9.863877
- ],
- "Nehlsen Cohrs|Standort Soltau": [
-  52.973277,
-  9.821625
- ],
- "Nehlsen Cohrs|Standort Visselhövede": [
-  52.982605,
-  9.595304
- ],
- "Nehlsen Consulting|Standort Bremen": [
-  53.137877,
-  8.696183
- ],
- "Nehlsen E. Heeren|Standort Emden": [
-  53.353173,
-  7.191985
- ],
- "Nehlsen E. Heeren|Standort Leer": [
-  53.216164,
-  7.45767
- ],
- "Nehlsen Industrieservice|Abfallbehandlung Reitbrake": [
-  53.134339,
-  8.719564
- ],
- "Nehlsen Industrieservice|Bremen Kap-Horn-Str. 5": [
-  53.116876,
-  8.746276
- ],
- "Nehlsen Industrieservice|Standort Bremen": [
-  53.117785,
-  8.751243
- ],
- "Nehlsen Industrieservice|Abfallbehandlung Strotthoffkai": [
-  53.058546,
-  8.876687
- ],
- "Nehlsen Industrieservice|Bremen Kap-Horn-Str. 3 (Kanal)": [
-  53.116466,
-  8.750529
- ],
- "Nehlsen MV|Standort Anklam": [
-  53.859803,
-  13.705362
- ],
- "Nehlsen MV|Standort Faulenrost": [
-  53.642692,
-  12.781713
- ],
- "Nehlsen MV|Betriebsstätte Neubrandenburg": [
-  53.594453,
-  13.294369
- ],
- "Nehlsen MV|Standort Ribnitz-Damgarten": [
-  54.25344,
-  12.488793
- ],
- "Nehlsen MV|Standort Samtens": [
-  54.352505,
-  13.288929
- ],
- "Nehlsen MV|Standort Stralsund": [
-  54.282857,
-  13.088083
- ],
- "Nehlsen Ostfriesland|Standort Südbrookmerland": [
-  53.467357,
-  7.303578
- ],
- "Nehlsen Ostfriesland|Standort Westoverledingen": [
-  53.194734,
-  7.481099
- ],
- "Nehlsen Ostfriesland|WVZ Gewerbewertstoffhof": [
-  53.468544,
-  7.3021
- ],
- "Nehlsen Sachsen|Standort Dresden": [
-  51.011279,
-  13.706831
- ],
- "Nehlsen Sachsen|Standort Kamenz": [
-  51.277845,
-  14.135011
- ],
- "Nehlsen Sachsen|Standort Meißen-Niederau": [
-  51.19981,
-  13.554453
- ],
- "Nehlsen Sachsen|Standort Radebeul": [
-  51.096595,
-  13.681835
- ],
- "Nehlsen Sachsen|Standort Zwickau": [
-  50.707726,
-  12.48977
- ],
- "Nehlsen Stoffstrom|Standort Bremen": [
-  53.137877,
-  8.696183
- ]
-}
+[
+  {
+    "id": "Nehlsen Berlin-Brandenburg|Standort Neuenhagen",
+    "company": "Nehlsen Berlin-Brandenburg",
+    "name": "Standort Neuenhagen",
+    "address": "Zum Mühlenfließ 14, 15366 Neuenhagen",
+    "phone": "03342 42475-0",
+    "email": "info.sva@nehlsen.com",
+    "hours": "Mo–Fr 7.00–15.00",
+    "lat": 52.532866,
+    "lng": 13.712643
+  },
+  {
+    "id": "Karl Nehlsen|Standort Bremen",
+    "company": "Karl Nehlsen",
+    "name": "Standort Bremen",
+    "address": "Hüttenstraße 5, 28237 Bremen",
+    "phone": "0421 6266-5333",
+    "email": "info.karl@nehlsen.com",
+    "hours": "Mo–Do 7.30–17.00\nFr 7.30–15.00",
+    "lat": 53.128387,
+    "lng": 8.713471
+  },
+  {
+    "id": "Karl Nehlsen|BS Bremer Recycling Kontor",
+    "company": "Karl Nehlsen",
+    "name": "BS Bremer Recycling Kontor",
+    "address": "Riespot 6, 28237 Bremen",
+    "phone": "0421 6266-5480",
+    "email": "info@bremer-recycling-kontor.de",
+    "hours": "Mo–Fr 7.00–17.00",
+    "lat": 53.126972,
+    "lng": 8.710546
+  },
+  {
+    "id": "Karl Nehlsen|Recycling Anlage Bremen",
+    "company": "Karl Nehlsen",
+    "name": "Recycling Anlage Bremen",
+    "address": "Fahrwiesendamm 100, 28219 Bremen",
+    "phone": "0421 380238-10",
+    "email": "auftrag.karlnehlsen@nehlsen.com",
+    "hours": "Mo–Fr 7.00–17.00",
+    "lat": 53.119433,
+    "lng": 8.802753
+  },
+  {
+    "id": "Karl Nehlsen|Standort Bremerhaven",
+    "company": "Karl Nehlsen",
+    "name": "Standort Bremerhaven",
+    "address": "Brückenstr. 25, 27568 Bremerhaven",
+    "phone": "0471 9413586",
+    "email": "waste@nehlsen.com",
+    "hours": "Mo–Do 8.00–17.00\nFr 8.00–15.00",
+    "lat": 53.572452,
+    "lng": 8.557943
+  },
+  {
+    "id": "Karl Nehlsen|Standort Delmenhorst",
+    "company": "Karl Nehlsen",
+    "name": "Standort Delmenhorst",
+    "address": "Steller Straße 44, 27755 Delmenhorst",
+    "phone": "04221 91644-0",
+    "email": "info.delmenhorst@nehlsen.com",
+    "hours": "Mo–Do 7.00–17.00\nFr 7.00–16.00",
+    "lat": 53.015765,
+    "lng": 8.659705
+  },
+  {
+    "id": "Karl Nehlsen|Standort Langwedel",
+    "company": "Karl Nehlsen",
+    "name": "Standort Langwedel",
+    "address": "Roggenkamp 2, 27299 Langwedel",
+    "phone": "04232 9317-0",
+    "email": "info.langwedel@nehlsen.com",
+    "hours": "Mo–Do 7.00–16.45\nFr 7.00–15.45",
+    "lat": 52.983281,
+    "lng": 9.179951
+  },
+  {
+    "id": "Karl Nehlsen|Standort Loxstedt",
+    "company": "Karl Nehlsen",
+    "name": "Standort Loxstedt",
+    "address": "Rudolf-Diesel-Str. 2, 27612 Loxstedt",
+    "phone": "04744 92950",
+    "email": "info.loxstedt@nehlsen.com",
+    "hours": "Mo–Do 8.00–12.00 & 13.00–17.00\nFr 8.00–15.00",
+    "lat": 53.475268,
+    "lng": 8.655986
+  },
+  {
+    "id": "Kompostierung Nord|Standort Bremen",
+    "company": "Kompostierung Nord",
+    "name": "Standort Bremen",
+    "address": "Fahrwiesendamm 100, 28219 Bremen",
+    "phone": "0421 618 92 93",
+    "email": "info@kno-bremen.de",
+    "hours": "Mo–Fr 7.30–16.00\nSa 8.00–13.00",
+    "lat": 53.119433,
+    "lng": 8.802753
+  },
+  {
+    "id": "Nehlsen AWG|Standort Oldenburg",
+    "company": "Nehlsen AWG",
+    "name": "Standort Oldenburg",
+    "address": "Am Schulgraben 11, 26135 Oldenburg",
+    "phone": "0441 92090-10",
+    "email": "AbwassertechnikOL@nehlsen.com",
+    "hours": "Mo–Do 7.00–16.00\nFr 7.00–13.00",
+    "lat": 53.104863,
+    "lng": 8.267622
+  },
+  {
+    "id": "Nehlsen AWG|Standort Varel",
+    "company": "Nehlsen AWG",
+    "name": "Standort Varel",
+    "address": "Gewerbestraße 3, 26316 Varel",
+    "phone": "04451 9112-0",
+    "email": "sbk.awg@nehlsen.com",
+    "hours": "Mo–Do 7.00–16.00\nFr 7.00–13.00",
+    "lat": 53.397067,
+    "lng": 8.112878
+  },
+  {
+    "id": "Nehlsen AWG|Standort Wangerland-Wiefels",
+    "company": "Nehlsen AWG",
+    "name": "Standort Wangerland-Wiefels",
+    "address": "Fuhlrieger Allee 2, 26434 Wangerland-Wiefels",
+    "phone": "04461 9987-0",
+    "email": "info.awg@nehlsen.com",
+    "hours": "Mo–Do 8.00–17.00\nFr 8.00–14.00",
+    "lat": 53.588826,
+    "lng": 7.866111
+  },
+  {
+    "id": "Nehlsen AWG|Standort Wilhelmshaven",
+    "company": "Nehlsen AWG",
+    "name": "Standort Wilhelmshaven",
+    "address": "Krabbenweg 5, 26388 Wilhelmshaven",
+    "phone": "04421 95580",
+    "email": "info.awg@nehlsen.com",
+    "hours": "Mo–Do 6.00–17.00\nFr 6.00–15.00",
+    "lat": 53.570747,
+    "lng": 8.105797
+  },
+  {
+    "id": "Nehlsen AWG|Wilhelmshaven – Kanal & Abwasser",
+    "company": "Nehlsen AWG",
+    "name": "Wilhelmshaven – Kanal & Abwasser",
+    "address": "Krabbenweg 5, 26388 Wilhelmshaven",
+    "phone": "+49 421 6266-284",
+    "email": "auftrag.kanal@nehlsen.com",
+    "hours": "Mo–Do 7.00–17.00\nFr 7.00–16.00",
+    "lat": 53.570756,
+    "lng": 8.105797
+  },
+  {
+    "id": "Nehlsen Berlin-Brandenburg|Standort Mittenwalde",
+    "company": "Nehlsen Berlin-Brandenburg",
+    "name": "Standort Mittenwalde",
+    "address": "Dahmestraße 15, 15749 Mittenwalde",
+    "phone": "033764 883-0",
+    "email": "info.berlin-brandenburg@nehlsen.com",
+    "hours": "Mo–Fr 7.00–15.00",
+    "lat": 52.257769,
+    "lng": 13.563393
+  },
+  {
+    "id": "Nehlsen Cloppenburg|Standort Cappeln",
+    "company": "Nehlsen Cloppenburg",
+    "name": "Standort Cappeln",
+    "address": "In der Riede 3, 49692 Cappeln",
+    "phone": "04471 184320",
+    "email": "info.cappeln@nehlsen.com",
+    "hours": "Mo–Do 7.00–17.00\nFr 7.00–16.00",
+    "lat": 52.813639,
+    "lng": 8.021321
+  },
+  {
+    "id": "Nehlsen Cloppenburg|Standort Lohne",
+    "company": "Nehlsen Cloppenburg",
+    "name": "Standort Lohne",
+    "address": "Krimpenforter Berg 10, 49393 Lohne",
+    "phone": "04442 4874",
+    "email": "info.lohne@nehlsen.com",
+    "hours": "Mo–Fr 8.00–12.00",
+    "lat": 52.684888,
+    "lng": 8.267939
+  },
+  {
+    "id": "Nehlsen Cohrs|Standort Schneverdingen",
+    "company": "Nehlsen Cohrs",
+    "name": "Standort Schneverdingen",
+    "address": "Hamburger Str. 902, 29640 Schneverdingen",
+    "phone": "05199-324",
+    "email": "info.cohrs@nehlsen.com",
+    "hours": "Mo–Do 8.00–15.30\nFr 8.00–13.00",
+    "lat": 53.04805,
+    "lng": 9.863877
+  },
+  {
+    "id": "Nehlsen Cohrs|Standort Soltau",
+    "company": "Nehlsen Cohrs",
+    "name": "Standort Soltau",
+    "address": "Willinger Weg 3a, 29614 Soltau",
+    "phone": "05191 9685-0",
+    "email": "info.cohrs@nehlsen.com",
+    "hours": "Mo–Fr 7.00–16.00",
+    "lat": 52.973277,
+    "lng": 9.821625
+  },
+  {
+    "id": "Nehlsen Cohrs|Standort Visselhövede",
+    "company": "Nehlsen Cohrs",
+    "name": "Standort Visselhövede",
+    "address": "Im Gewerbepark 11, 27374 Visselhövede",
+    "phone": "04262-577",
+    "email": "info.cohrs@nehlsen.com",
+    "hours": "Mo–Do 7.00–17.00\nFr 7.00–16.00",
+    "lat": 52.982605,
+    "lng": 9.595304
+  },
+  {
+    "id": "Nehlsen Consulting|Standort Bremen",
+    "company": "Nehlsen Consulting",
+    "name": "Standort Bremen",
+    "address": "Wilhelm-Karmann-Str. 5, 28237 Bremen",
+    "phone": "0421 84482-2555",
+    "email": "info.consulting@nehlsen.com",
+    "hours": "Mo–Do 8.00–17.00\nFr 8.00–16.00",
+    "lat": 53.137877,
+    "lng": 8.696183
+  },
+  {
+    "id": "Nehlsen E. Heeren|Standort Emden",
+    "company": "Nehlsen E. Heeren",
+    "name": "Standort Emden",
+    "address": "Zu den Hafenbecken 18, 26723 Emden",
+    "phone": "04921 20216",
+    "email": "info.e.heeren@nehlsen.com",
+    "hours": "Mo–Do 7.30–16.00\nFr 7.30–13.00",
+    "lat": 53.353173,
+    "lng": 7.191985
+  },
+  {
+    "id": "Nehlsen E. Heeren|Standort Leer",
+    "company": "Nehlsen E. Heeren",
+    "name": "Standort Leer",
+    "address": "Sägemühlenstr. 102, 26789 Leer",
+    "phone": "0491 92807-0",
+    "email": "info.e.heeren@nehlsen.com",
+    "hours": "Mo–Fr 8.00–16.00",
+    "lat": 53.216164,
+    "lng": 7.45767
+  },
+  {
+    "id": "Nehlsen Industrieservice|Abfallbehandlung Reitbrake",
+    "company": "Nehlsen Industrieservice",
+    "name": "Abfallbehandlung Reitbrake",
+    "address": "Reitbrake 6, 28239 Bremen",
+    "phone": "0421 643 68-12",
+    "email": "sonderabfall@nehlsen.com",
+    "hours": "Mo–Do 8.00–12.00 (nur mit tel. Anmeldung)",
+    "lat": 53.134339,
+    "lng": 8.719564
+  },
+  {
+    "id": "Nehlsen Industrieservice|Bremen Kap-Horn-Str. 5",
+    "company": "Nehlsen Industrieservice",
+    "name": "Bremen Kap-Horn-Str. 5",
+    "address": "Kap-Horn-Straße 5, 28237 Bremen",
+    "phone": "0421 6266 200",
+    "email": "sonderabfall@nehlsen.com",
+    "hours": "Mo–Do 7.00–17.00\nFr 7.00–16.00",
+    "lat": 53.116876,
+    "lng": 8.746276
+  },
+  {
+    "id": "Nehlsen Industrieservice|Standort Bremen",
+    "company": "Nehlsen Industrieservice",
+    "name": "Standort Bremen",
+    "address": "Louis-Krages-Straße 10, 28237 Bremen",
+    "phone": "0421 6266 200",
+    "email": "sonderabfall@nehlsen.com",
+    "hours": "Mo–Do 7.00–18.00\nFr 7.00–16.00",
+    "lat": 53.117785,
+    "lng": 8.751243
+  },
+  {
+    "id": "Nehlsen Industrieservice|Abfallbehandlung Strotthoffkai",
+    "company": "Nehlsen Industrieservice",
+    "name": "Abfallbehandlung Strotthoffkai",
+    "address": "Strotthoffkai 18, 28309 Bremen",
+    "phone": "0421 6266 200",
+    "email": "sonderabfall@nehlsen.com",
+    "hours": "Mo–Do 7.00–15.00\nFr 7.00–14.30",
+    "lat": 53.058546,
+    "lng": 8.876687
+  },
+  {
+    "id": "Nehlsen Industrieservice|Bremen Kap-Horn-Str. 3 (Kanal)",
+    "company": "Nehlsen Industrieservice",
+    "name": "Bremen Kap-Horn-Str. 3 (Kanal)",
+    "address": "Kap-Horn-Str. 3, 28237 Bremen",
+    "phone": "+49 421 6266-284",
+    "email": "auftrag.kanal@nehlsen.com",
+    "hours": "Mo–Do 7.00–17.00\nFr 7.00–16.00",
+    "lat": 53.116466,
+    "lng": 8.750529
+  },
+  {
+    "id": "Nehlsen MV|Standort Anklam",
+    "company": "Nehlsen MV",
+    "name": "Standort Anklam",
+    "address": "Industriestr. 10, 17389 Anklam",
+    "phone": "03971 211404",
+    "email": "info.mv.anklam@nehlsen.com",
+    "hours": "Mo–Fr 7.15–16.00",
+    "lat": 53.859803,
+    "lng": 13.705362
+  },
+  {
+    "id": "Nehlsen MV|Standort Faulenrost",
+    "company": "Nehlsen MV",
+    "name": "Standort Faulenrost",
+    "address": "Dorfstraße, 17139 Faulenrost",
+    "phone": "039951 2239",
+    "email": "info.mv.faulenrost@nehlsen.com",
+    "hours": "Mo–Fr 7.00–16.00",
+    "lat": 53.642692,
+    "lng": 12.781713
+  },
+  {
+    "id": "Nehlsen MV|Betriebsstätte Neubrandenburg",
+    "company": "Nehlsen MV",
+    "name": "Betriebsstätte Neubrandenburg",
+    "address": "Gewerbepark 10-11, 17039 Trollenhagen-Hellfeld",
+    "phone": "0395 42987-0",
+    "email": "info.mv.neubrandenburg@nehlsen.com",
+    "hours": "Mo–Fr 7.00–16.00",
+    "lat": 53.594453,
+    "lng": 13.294369
+  },
+  {
+    "id": "Nehlsen MV|Standort Ribnitz-Damgarten",
+    "company": "Nehlsen MV",
+    "name": "Standort Ribnitz-Damgarten",
+    "address": "An der Mühle 11, 18311 Ribnitz-Damgarten",
+    "phone": "03821 7116-0",
+    "email": "info.mv.ribnitz@nehlsen.com",
+    "hours": "Mo–Fr 7.00–16.00",
+    "lat": 54.25344,
+    "lng": 12.488793
+  },
+  {
+    "id": "Nehlsen MV|Standort Samtens",
+    "company": "Nehlsen MV",
+    "name": "Standort Samtens",
+    "address": "Muhlitzer Str. 4, 18573 Samtens",
+    "phone": "038306 152-0",
+    "email": "info.mv.ruegen@nehlsen.com",
+    "hours": "Mo–Do 8.00–17.00\nFr 8.00–16.30",
+    "lat": 54.352505,
+    "lng": 13.288929
+  },
+  {
+    "id": "Nehlsen MV|Standort Stralsund",
+    "company": "Nehlsen MV",
+    "name": "Standort Stralsund",
+    "address": "Voigdehäger Weg 60, 18439 Stralsund",
+    "phone": "03831 28485-0",
+    "email": "info.mv.stralsund@nehlsen.com",
+    "hours": "Mo–Mi 7.00–17.00\nDo 7.00–18.00\nFr 7.00–17.00",
+    "lat": 54.282857,
+    "lng": 13.088083
+  },
+  {
+    "id": "Nehlsen Ostfriesland|Standort Südbrookmerland",
+    "company": "Nehlsen Ostfriesland",
+    "name": "Standort Südbrookmerland",
+    "address": "Gewerbestraße 33, 26624 Südbrookmerland",
+    "phone": "04942 9197-0",
+    "email": "info.ostfriesland@nehlsen.com",
+    "hours": "Mo–Fr 7.00–16.30",
+    "lat": 53.467357,
+    "lng": 7.303578
+  },
+  {
+    "id": "Nehlsen Ostfriesland|Standort Westoverledingen",
+    "company": "Nehlsen Ostfriesland",
+    "name": "Standort Westoverledingen",
+    "address": "Deponiestraße 3, 26810 Westoverledingen",
+    "phone": "04955 92901-0",
+    "email": "info.breinermoor@nehlsen.com",
+    "hours": "Mo–Fr 7.00–17.30",
+    "lat": 53.194734,
+    "lng": 7.481099
+  },
+  {
+    "id": "Nehlsen Ostfriesland|WVZ Gewerbewertstoffhof",
+    "company": "Nehlsen Ostfriesland",
+    "name": "WVZ Gewerbewertstoffhof",
+    "address": "Gewerbestraße 24, 26624 Südbrookmerland",
+    "phone": "04942 91970",
+    "email": "info.ostfriesland@nehlsen.com",
+    "hours": "Mo–Fr 7.00–16.30",
+    "lat": 53.468544,
+    "lng": 7.3021
+  },
+  {
+    "id": "Nehlsen Sachsen|Standort Dresden",
+    "company": "Nehlsen Sachsen",
+    "name": "Standort Dresden",
+    "address": "Pforzheimer Straße 1, 01189 Dresden",
+    "phone": "0800 44 55 455",
+    "email": "info.sachsen@nehlsen.com",
+    "hours": "Mo–Fr 7.00–17.30",
+    "lat": 51.011279,
+    "lng": 13.706831
+  },
+  {
+    "id": "Nehlsen Sachsen|Standort Kamenz",
+    "company": "Nehlsen Sachsen",
+    "name": "Standort Kamenz",
+    "address": "Neschwitzer Straße 66, 01917 Kamenz",
+    "phone": "03578 34020",
+    "email": "info.sachsen@nehlsen.com",
+    "hours": "Mo–Fr 7.00–17.00",
+    "lat": 51.277845,
+    "lng": 14.135011
+  },
+  {
+    "id": "Nehlsen Sachsen|Standort Meißen-Niederau",
+    "company": "Nehlsen Sachsen",
+    "name": "Standort Meißen-Niederau",
+    "address": "Radeburger Straße 65, 01689 Meißen-Niederau",
+    "phone": "03521 7654-0",
+    "email": "info.sachsen@nehlsen.com",
+    "hours": "Mo–Fr 7.00–17.00",
+    "lat": 51.19981,
+    "lng": 13.554453
+  },
+  {
+    "id": "Nehlsen Sachsen|Standort Radebeul",
+    "company": "Nehlsen Sachsen",
+    "name": "Standort Radebeul",
+    "address": "Gartenstr. 38, 01445 Radebeul",
+    "phone": "0351 83188-0",
+    "email": "info.radebeul@nehlsen.com",
+    "hours": "Mo–Fr 7.00–17.00",
+    "lat": 51.096595,
+    "lng": 13.681835
+  },
+  {
+    "id": "Nehlsen Sachsen|Standort Zwickau",
+    "company": "Nehlsen Sachsen",
+    "name": "Standort Zwickau",
+    "address": "Saarstraße 10, 08056 Zwickau",
+    "phone": "03521 7654 260",
+    "email": "info.sachsen@nehlsen.com",
+    "hours": "Mo–Fr 7.00–17.00",
+    "lat": 50.707726,
+    "lng": 12.48977
+  },
+  {
+    "id": "Nehlsen Stoffstrom|Standort Bremen",
+    "company": "Nehlsen Stoffstrom",
+    "name": "Standort Bremen",
+    "address": "Wilhelm-Karmann-Str. 5, 28237 Bremen",
+    "phone": "0421 84482-2000",
+    "email": "info.stoffstrom@nehlsen.com",
+    "hours": "Mo–Do 8.00–17.00\nFr 8.00–16.00",
+    "lat": 53.137877,
+    "lng": 8.696183
+  }
+]
