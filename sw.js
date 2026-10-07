@@ -1,39 +1,102 @@
-// Service Worker: App laeuft auch bei schlechtem Netz. Version erhoehen, wenn index.html geaendert wird!
-const VERSION = "v2";
-const APP = "app-" + VERSION, TILES = "tiles-" + VERSION;
-const CORE = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+// Bump the version whenever a cached app asset changes.
+const VERSION = "v4";
+const APP_CACHE = `app-${VERSION}`;
+const TILE_CACHE = `tiles-${VERSION}`;
+const CORE = [
+  "./",
+  "./index.html",
+  "./css/app.css",
+  "./js/app.js",
+  "./js/domain.js",
+  "./standorte.json",
+  "./manifest.webmanifest",
+  "./vendor/leaflet.js",
+  "./vendor/leaflet.css",
+  "./vendor/leaflet.markercluster.js",
+  "./vendor/MarkerCluster.css",
+  "./vendor/MarkerCluster.Default.css",
+  "./vendor/images/layers.png",
+  "./vendor/images/layers-2x.png",
+  "./vendor/images/marker-icon.png",
+  "./vendor/images/marker-icon-2x.png",
+  "./vendor/images/marker-shadow.png",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+];
+const TILE_LIMIT = 500;
 
-self.addEventListener("install", e => {
-  e.waitUntil(caches.open(APP).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(APP_CACHE)
+      .then((cache) => cache.addAll(CORE))
+      .then(() => self.skipWaiting()),
+  );
 });
-self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== APP && k !== TILES).map(k => caches.delete(k))))
-    .then(() => self.clients.claim()));
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys
+        .filter((key) => (key.startsWith("app-") && key !== APP_CACHE) || (key.startsWith("tiles-") && key !== TILE_CACHE))
+        .map((key) => caches.delete(key))))
+      .then(() => self.clients.claim()),
+  );
 });
-self.addEventListener("fetch", e => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== "GET") return;
-  // Kartenkacheln: erst Cache, sonst Netz (max. ca. 500 Kacheln)
+
+async function trimTileCache(cache) {
+  const keys = await cache.keys();
+  const overflow = keys.length - TILE_LIMIT;
+  if (overflow > 0) await Promise.all(keys.slice(0, overflow).map((key) => cache.delete(key)));
+}
+
+async function handleTile(request) {
+  const cache = await caches.open(TILE_CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      await cache.put(request, response.clone());
+      await trimTileCache(cache);
+    }
+    return response;
+  } catch {
+    return new Response("Map tile unavailable offline", { status: 504, statusText: "Offline" });
+  }
+}
+
+async function handleSameOrigin(request) {
+  const cache = await caches.open(APP_CACHE);
+  if (request.mode === "navigate") {
+    try {
+      const response = await fetch(request);
+      if (response.ok) await cache.put("./index.html", response.clone());
+      return response;
+    } catch {
+      return (await cache.match("./index.html")) ?? Response.error();
+    }
+  }
+
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
+    if (response.ok) await cache.put(request, response.clone());
+    return response;
+  } catch {
+    return Response.error();
+  }
+}
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+  const url = new URL(request.url);
   if (url.hostname.endsWith("tile.openstreetmap.org")) {
-    e.respondWith(caches.open(TILES).then(async c => {
-      const hit = await c.match(e.request);
-      if (hit) return hit;
-      const res = await fetch(e.request);
-      if (res.ok) { c.put(e.request, res.clone()); c.keys().then(k => { if (k.length > 500) c.delete(k[0]); }); }
-      return res;
-    }).catch(() => new Response("", {status: 504})));
+    event.respondWith(handleTile(request));
     return;
   }
-  // Eigene Dateien: erst Netz (immer aktuell), offline aus Cache
-  if (url.origin === location.origin) {
-    e.respondWith(fetch(e.request).then(res => {
-      const copy = res.clone(); caches.open(APP).then(c => c.put(e.request, copy)); return res;
-    }).catch(() => caches.match(e.request).then(r => r || caches.match("index.html"))));
-    return;
+  if (url.origin === self.location.origin) {
+    event.respondWith(handleSameOrigin(request));
   }
-  // Bibliotheken (Leaflet, Schrift): Cache, sonst Netz
-  e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
-    if (res.ok) { const copy = res.clone(); caches.open(APP).then(c => c.put(e.request, copy)); }
-    return res;
-  })));
 });
