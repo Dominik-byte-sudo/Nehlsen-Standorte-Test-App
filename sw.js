@@ -1,5 +1,5 @@
 // Bump the version whenever a cached app asset changes.
-const VERSION = "v4";
+const VERSION = "v5";
 const APP_CACHE = `app-${VERSION}`;
 const TILE_CACHE = `tiles-${VERSION}`;
 const CORE = [
@@ -76,7 +76,6 @@ async function handleSameOrigin(request) {
       return (await cache.match("./index.html")) ?? Response.error();
     }
   }
-
   const cached = await cache.match(request);
   if (cached) return cached;
   try {

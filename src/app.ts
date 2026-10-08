@@ -1,5 +1,6 @@
 /// <reference types="leaflet.markercluster" />
 declare const L: typeof import("leaflet");
+
 import { distanceKm, escapeHtml, filterLocations, validateLocations, type Coordinates, type Location } from "./domain.js";
 
 const byId = <T extends HTMLElement>(id: string): T => {
@@ -15,9 +16,7 @@ const queryInput = byId<HTMLInputElement>("q");
 const nearButton = byId<HTMLButtonElement>("nearBtn");
 const sheet = byId<HTMLElement>("sheet");
 const closeButton = byId<HTMLButtonElement>("sClose");
-const appHeader = document.querySelector<HTMLElement>("#app > header");
 const tabs = document.querySelector<HTMLElement>(".tabs");
-const main = document.querySelector<HTMLElement>("#app > main");
 const mapTab = byId<HTMLButtonElement>("tMap");
 const listTab = byId<HTMLButtonElement>("tList");
 const toastElement = byId<HTMLDivElement>("toast");
@@ -64,7 +63,12 @@ function makeMarker(location: Location): L.Marker {
     icon: markerIcon,
     title: `${location.company} – ${location.name}`,
     keyboard: true,
-  }).on("click", () => openSheet(location));
+    bubblingMouseEvents: false,
+  }).on("click", (event: L.LeafletMouseEvent) => {
+    // Nur bei Tastaturbedienung den Fokus ins Detailfenster setzen.
+    const viaKeyboard = event.originalEvent instanceof KeyboardEvent;
+    openSheet(location, { moveFocus: viaKeyboard, panToMarker: true });
+  });
 }
 
 function render(): void {
@@ -92,18 +96,36 @@ function render(): void {
   }
 }
 
-function focusableElements(): HTMLElement[] {
-  return [...sheet.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
-    .filter((element) => !element.hasAttribute("hidden"));
+// Sorgt dafür, dass der gewählte Pin nicht vom Detailfenster verdeckt wird.
+function keepMarkerVisible(location: Location): void {
+  window.requestAnimationFrame(() => {
+    const sheetRect = sheet.getBoundingClientRect();
+    const mapRect = mapElement.getBoundingClientRect();
+    const padding = 24;
+    if (isDesktop()) {
+      const coveredRight = Math.max(0, mapRect.right - sheetRect.left);
+      map.panInside([location.lat, location.lng], {
+        paddingTopLeft: [padding, padding],
+        paddingBottomRight: [coveredRight + padding, padding],
+      });
+    } else {
+      const coveredBottom = Math.max(0, mapRect.bottom - sheetRect.top);
+      map.panInside([location.lat, location.lng], {
+        paddingTopLeft: [padding, padding + 30],
+        paddingBottomRight: [padding, coveredBottom + padding],
+      });
+    }
+  });
 }
 
-function setBackgroundInert(inert: boolean): void {
-  for (const element of [appHeader, tabs, main]) {
-    if (element) element.inert = inert;
-  }
+interface OpenSheetOptions {
+  moveFocus?: boolean;
+  panToMarker?: boolean;
 }
 
-function openSheet(location: Location): void {
+// Nicht-modales Detailfenster: Karte, Suche und andere Pins bleiben bedienbar.
+// Ein Klick auf einen anderen Pin tauscht nur den Inhalt aus.
+function openSheet(location: Location, options: OpenSheetOptions = {}): void {
   const destination = encodeURIComponent(location.address);
   const distance = origin ? `<div class="distance-note">ca. ${Math.round(distanceKm(origin, location))} km Luftlinie entfernt</div>` : "";
   byId<HTMLDivElement>("sBody").innerHTML = `<div class="co">${escapeHtml(location.company)}</div>
@@ -116,26 +138,35 @@ function openSheet(location: Location): void {
       <a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;destination=${destination}">Route starten</a>
       <a class="btn secondary" target="_blank" rel="noopener" href="https://maps.apple.com/?daddr=${destination}" aria-label="Route in Apple Karten">Apple Karten</a>
     </div>`;
+  sheet.scrollTop = 0;
 
-  lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  sheet.inert = false;
-  sheet.setAttribute("aria-hidden", "false");
-  sheet.classList.add("open");
-  setBackgroundInert(true);
-  closeButton.focus({ preventScroll: true });
+  const wasOpen = sheet.classList.contains("open");
+  if (!wasOpen) {
+    const active = document.activeElement;
+    lastFocusedElement = active instanceof HTMLElement && !sheet.contains(active) ? active : null;
+    sheet.inert = false;
+    sheet.setAttribute("aria-hidden", "false");
+    sheet.classList.add("open");
+  }
+
+  if (options.moveFocus) closeButton.focus({ preventScroll: true });
+  if (options.panToMarker) keepMarkerVisible(location);
 }
 
 function closeSheet(): void {
   if (!sheet.classList.contains("open")) return;
+  const focusWasInside = sheet.contains(document.activeElement);
   sheet.classList.remove("open");
   sheet.setAttribute("aria-hidden", "true");
   sheet.inert = true;
-  setBackgroundInert(false);
-  const fallback = isDesktop() ? queryInput : mapTab;
-  const focusTarget = lastFocusedElement?.isConnected && !lastFocusedElement.closest(".hidden")
-    ? lastFocusedElement
-    : fallback;
-  focusTarget.focus({ preventScroll: true });
+  // Fokus nur zurückgeben, wenn er im Fenster lag – sonst nicht "wegreißen".
+  if (focusWasInside) {
+    const fallback = isDesktop() ? queryInput : mapTab;
+    const focusTarget = lastFocusedElement?.isConnected && !lastFocusedElement.closest(".hidden")
+      ? lastFocusedElement
+      : fallback;
+    focusTarget.focus({ preventScroll: true });
+  }
   lastFocusedElement = null;
 }
 
@@ -154,7 +185,7 @@ function showTab(tab: "map" | "list"): void {
   }
   if (showMap) {
     window.requestAnimationFrame(() => map.invalidateSize());
-  } else {
+  } else if (!isDesktop()) {
     closeSheet();
   }
 }
@@ -180,8 +211,16 @@ listElement.addEventListener("click", (event) => {
   const location = locations.find((candidate) => candidate.id === button.dataset.id);
   if (!location) return;
   showTab("map");
-  map.setView([location.lat, location.lng], 14);
-  openSheet(location);
+  const marker = locationMarkers.get(location.id);
+  const openIt = (): void => openSheet(location, { moveFocus: event.detail === 0, panToMarker: true });
+  // Cluster bei Bedarf aufklappen, damit der Pin sichtbar ist.
+  if (marker && markerCluster.hasLayer(marker)) {
+    map.setView([location.lat, location.lng], Math.max(map.getZoom(), 14), { animate: false });
+    markerCluster.zoomToShowLayer(marker, openIt);
+  } else {
+    map.setView([location.lat, location.lng], 14);
+    openIt();
+  }
 });
 
 mapTab.addEventListener("click", () => showTab("map"));
@@ -208,29 +247,12 @@ queryInput.addEventListener("input", () => {
 });
 
 closeButton.addEventListener("click", closeSheet);
+// Klick auf eine freie Stelle der Karte schließt das Fenster; Ziehen/Zoomen nicht.
 map.on("click", closeSheet);
 document.addEventListener("keydown", (event) => {
-  if (!sheet.classList.contains("open")) return;
-  if (event.key === "Escape") {
+  if (event.key === "Escape" && sheet.classList.contains("open")) {
     event.preventDefault();
     closeSheet();
-    return;
-  }
-  if (event.key !== "Tab") return;
-  const focusables = focusableElements();
-  if (!focusables.length) {
-    event.preventDefault();
-    closeButton.focus({ preventScroll: true });
-    return;
-  }
-  const first = focusables[0];
-  const last = focusables[focusables.length - 1];
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
   }
 });
 
@@ -246,9 +268,10 @@ nearButton.addEventListener("click", () => {
     userMarker?.remove();
     userMarker = L.marker([origin.lat, origin.lng], {
       icon: L.divIcon({ className: "", html: '<div class="me"></div>', iconSize: [22, 22] }),
+      interactive: false,
     }).addTo(map);
     render();
-    const nearest = filteredLocations()[0];
+      const nearest = filteredLocations()[0];
     if (!nearest) return;
     map.fitBounds(L.latLngBounds([[origin.lat, origin.lng], [nearest.lat, nearest.lng]]), { padding: [50, 50] });
     toast(`Nächster Standort: ${nearest.company} ${nearest.name} (${Math.round(distanceKm(origin, nearest))} km)`);

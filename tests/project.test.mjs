@@ -4,18 +4,10 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 const read = (name) => readFile(new URL(name, root), "utf8");
-
 const [html, css, sw, appSource, compiledApp, toolHtml, toolSource, compiledTool, manifestText, locationsText] = await Promise.all([
-  read("index.html"),
-  read("css/app.css"),
-  read("sw.js"),
-  read("src/app.ts"),
-  read("js/app.js"),
-  read("koordinaten-werkzeug.html"),
-  read("src/coordinate-tool.ts"),
-  read("js/coordinate-tool.js"),
-  read("manifest.webmanifest"),
-  read("standorte.json"),
+  read("index.html"), read("css/app.css"), read("sw.js"), read("src/app.ts"), read("js/app.js"),
+  read("koordinaten-werkzeug.html"), read("src/coordinate-tool.ts"), read("js/coordinate-tool.js"),
+  read("manifest.webmanifest"), read("standorte.json"),
 ]);
 const manifest = JSON.parse(manifestText);
 const locations = JSON.parse(locationsText);
@@ -25,9 +17,7 @@ test("Standorte liegen in einer gemeinsamen, vollständigen Datenquelle", () => 
   assert.equal(locations.length, 43);
   assert.equal(new Set(locations.map((item) => item.id)).size, locations.length);
   for (const item of locations) {
-    for (const field of ["company", "name", "address", "phone", "email", "hours", "lat", "lng"]) {
-      assert.ok(Object.hasOwn(item, field), `${item.id} needs ${field}`);
-    }
+    for (const field of ["company", "name", "address", "phone", "email", "hours", "lat", "lng"]) assert.ok(Object.hasOwn(item, field), `${item.id} needs ${field}`);
     assert.ok(item.lat >= -90 && item.lat <= 90, `${item.id} latitude`);
     assert.ok(item.lng >= -180 && item.lng <= 180, `${item.id} longitude`);
   }
@@ -41,9 +31,7 @@ test("App und Koordinaten-Werkzeug verwenden dieselbe Standortdatei", () => {
   assert.doesNotMatch(toolSource, /const S\s*=\s*\[/);
 });
 
-test("PWA ermöglicht Hoch- und Querformat", () => {
-  assert.equal(manifest.orientation, undefined);
-});
+test("PWA ermöglicht Hoch- und Querformat", () => assert.equal(manifest.orientation, undefined));
 
 test("Desktop erhält eine breite Karten-und-Liste-Ansicht", () => {
   assert.match(css, /@media\s*\(min-width:\s*800px\)/);
@@ -58,18 +46,28 @@ test("Handy-Viewport bleibt responsiv und nutzt Safe Areas", () => {
   assert.match(css, /@media\s*\(max-width:/);
 });
 
-test("Standortdialog ist bei geschlossenem Zustand inert und modal gekennzeichnet", () => {
-  assert.match(html, /id="sheet"[^>]*aria-modal="true"[^>]*inert/);
+test("Standortdetail ist nicht-modal; Hintergrund bleibt interaktiv", () => {
+  assert.match(html, /id="sheet"[^>]*aria-modal="false"[^>]*inert/);
   assert.match(html, /id="sheet"[^>]*aria-hidden="true"/);
+  assert.doesNotMatch(html, /aria-modal="true"/);
+  assert.doesNotMatch(appSource, /setBackgroundInert/);
+  assert.doesNotMatch(appSource, /focusableElements\(/);
+  assert.ok(appSource.includes("sheet.inert = false"));
+  assert.ok(appSource.includes("sheet.inert = true"));
 });
 
-test("Dialog blockiert Hintergrund, schließt per Escape und gibt Fokus zurück", () => {
-  assert.ok(html.includes('role="dialog" aria-modal="true"'));
-  assert.ok(html.includes('aria-hidden="true" inert'));
-  assert.ok(appSource.includes("sheet.inert = true"));
+test("Ein Marker-Klick wechselt den Inhalt des bereits offenen Standortdetails", () => {
+  assert.ok(appSource.includes('const wasOpen = sheet.classList.contains("open")'));
+  assert.ok(appSource.includes("if (!wasOpen)"));
+  assert.ok(appSource.includes("bubblingMouseEvents: false"));
+  assert.ok(appSource.includes('map.on("click", closeSheet)'));
+  assert.ok(compiledApp.includes('const wasOpen = sheet.classList.contains("open")'));
+});
+
+test("Dialog schließt per Escape und fängt die Tab-Taste nicht ab", () => {
   assert.ok(appSource.includes('event.key === "Escape"'));
-  assert.ok(appSource.includes("focusTarget.focus({ preventScroll: true })"));
-  assert.ok(appSource.includes("focusables[0]"));
+  assert.doesNotMatch(appSource, /event\.key !== "Tab"/);
+  assert.ok(compiledApp.includes('event.key === "Escape"'));
 });
 
 test("Offline-Kernressourcen werden lokal vorab gecacht", async () => {
