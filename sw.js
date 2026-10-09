@@ -1,5 +1,5 @@
 // Bump the version whenever a cached app asset changes.
-const VERSION = "v5";
+const VERSION = "v25";
 const APP_CACHE = `app-${VERSION}`;
 const TILE_CACHE = `tiles-${VERSION}`;
 const CORE = [
@@ -9,6 +9,7 @@ const CORE = [
   "./js/app.js",
   "./js/domain.js",
   "./standorte.json",
+  "./assets/nehlsen-logo.png",
   "./manifest.webmanifest",
   "./vendor/leaflet.js",
   "./vendor/leaflet.css",
