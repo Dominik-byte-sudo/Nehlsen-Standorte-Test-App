@@ -3,13 +3,13 @@ html, body { width: 100%; height: 100%; min-height: 100%; margin: 0; font-family
 body { display: flex; overflow: hidden; }
 #tool-shell { display: grid; width: 100%; height: 100%; grid-template-columns: minmax(330px, 410px) minmax(0, 1fr); }
 aside { z-index: 2; display: flex; min-height: 0; flex-direction: column; border-right: 1px solid #dce3df; background: #fff; }
-#top { padding: 18px; color: #fff; background: #00703c; }
+#top { padding: 18px; color: #0c120e; background: #6ab023; }
 #top h1 { margin: 0 0 8px; font-size: 19px; }
 #top p { margin: 0 0 12px; font-size: 13px; line-height: 1.5; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 button { min-height: 42px; padding: 9px 12px; border: 0; border-radius: 8px; font: inherit; font-weight: 650; cursor: pointer; }
 button:focus-visible { outline: 3px solid #ffd54a; outline-offset: 2px; }
-#run-geocode { color: #00703c; background: #fff; }
+#run-geocode { color: #4d8018; background: #fff; }
 #download-data { color: #1b2620; background: #ffd54a; }
 button:disabled { opacity: .55; cursor: wait; }
 #progress { min-height: 20px; margin-top: 10px; font-size: 12.5px; }
@@ -19,7 +19,7 @@ button:disabled { opacity: .55; cursor: wait; }
 .location-item strong, .location-item span { display: block; }
 .location-item strong { font-size: 13px; }
 .location-item span { margin-top: 3px; color: #5d6b63; }
-.status.found { color: #00703c; }
+.status.found { color: #4d8018; }
 .status.approximate, .status.untested { color: #a45d00; }
 .status.missing, .status.error { color: #b42318; }
 .status.manual { color: #1a56c9; }

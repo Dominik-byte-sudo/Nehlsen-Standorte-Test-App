@@ -1,5 +1,5 @@
 // Bump the version whenever a cached app asset changes.
-const VERSION = "v5";
+const VERSION = "v37";
 const APP_CACHE = `app-${VERSION}`;
 const TILE_CACHE = `tiles-${VERSION}`;
 const CORE = [
@@ -9,6 +9,7 @@ const CORE = [
   "./js/app.js",
   "./js/domain.js",
   "./standorte.json",
+  "./assets/nehlsen-logo.png",
   "./manifest.webmanifest",
   "./vendor/leaflet.js",
   "./vendor/leaflet.css",
@@ -28,7 +29,7 @@ const TILE_LIMIT = 500;
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(APP_CACHE)
-      .then((cache) => cache.addAll(CORE))
+      .then((cache) => cache.addAll(CORE.map((path) => new Request(path, { cache: "reload" }))))
       .then(() => self.skipWaiting()),
   );
 });

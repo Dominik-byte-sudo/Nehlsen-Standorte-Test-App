@@ -13,14 +13,26 @@ const queryInput = byId("q");
 const nearButton = byId("nearBtn");
 const sheet = byId("sheet");
 const closeButton = byId("sClose");
+const viewControls = byId("viewControls");
 const tabs = document.querySelector(".tabs");
 const mapTab = byId("tMap");
 const listTab = byId("tList");
+const mobileMenuToggle = byId("mobileMenuToggle");
 const toastElement = byId("toast");
+const workspace = byId("workspace");
+const listToggle = byId("listToggle");
+const themeToggle = byId("themeToggle");
+const themeDock = byId("themeDock");
+const themeColor = byId("themeColor");
+const appearanceToggle = byId("appearanceToggle");
+const appearanceMenu = byId("appearanceMenu");
+const designNormal = byId("designNormal");
+const designGlass = byId("designGlass");
 const map = L.map(mapElement, { zoomControl: false }).setView([52.9, 10.5], 6);
-L.control.zoom({ position: "bottomright" }).addTo(map);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+L.control.zoom({ position: "bottomright", zoomInTitle: "Vergrößern", zoomOutTitle: "Verkleinern" }).addTo(map);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
+    referrerPolicy: "strict-origin-when-cross-origin",
     attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
 }).addTo(map);
 const markerIcon = L.divIcon({
@@ -38,13 +50,124 @@ let activeQuery = "";
 let toastTimer;
 let lastFocusedElement = null;
 const locationMarkers = new Map();
-const isDesktop = () => window.matchMedia("(min-width: 800px)").matches;
+const isDesktop = () => window.matchMedia("(min-width: 1024px)").matches;
 function toast(message) {
     toastElement.textContent = message;
     toastElement.classList.remove("hidden");
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => toastElement.classList.add("hidden"), 3500);
 }
+function preferredTheme() {
+    try {
+        const savedTheme = localStorage.getItem("nehlsen-theme");
+        if (savedTheme === "light" || savedTheme === "dark")
+            return savedTheme;
+    }
+    catch {
+        // Private-browsing policies may disable local storage; use the system setting.
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+function applyTheme(theme, save = false) {
+    document.documentElement.dataset.theme = theme;
+    themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
+    const action = theme === "dark" ? "Hellmodus aktivieren" : "Dunkelmodus aktivieren";
+    themeToggle.setAttribute("aria-label", action);
+    themeToggle.title = action;
+    const label = themeToggle.querySelector(".theme-label");
+    if (label)
+        label.textContent = theme === "dark" ? "Hell" : "Dunkel";
+    themeColor.content = "#6ab023";
+    if (save) {
+        try {
+            localStorage.setItem("nehlsen-theme", theme);
+        }
+        catch {
+            toast("Die Designauswahl kann auf diesem Gerät nicht gespeichert werden.");
+        }
+    }
+}
+applyTheme(preferredTheme());
+themeToggle.addEventListener("click", () => {
+    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+    closeMobileMenu();
+});
+function preferredDesign() {
+    try {
+        const savedDesign = localStorage.getItem("nehlsen-design");
+        if (savedDesign === "normal" || savedDesign === "glass")
+            return savedDesign;
+    }
+    catch {
+        // Falls localStorage gesperrt ist, bleibt das normale Design aktiv.
+    }
+    return "normal";
+}
+function closeAppearanceMenu() {
+    appearanceMenu.classList.add("hidden");
+    appearanceToggle.setAttribute("aria-expanded", "false");
+}
+function setMobileMenu(open) {
+    if (!open)
+        closeAppearanceMenu();
+    viewControls.classList.toggle("menu-open", open);
+    mobileMenuToggle.setAttribute("aria-expanded", String(open));
+    const action = open ? "Einstellungen schließen" : "Einstellungen öffnen";
+    mobileMenuToggle.setAttribute("aria-label", action);
+    mobileMenuToggle.title = action;
+}
+function closeMobileMenu() {
+    setMobileMenu(false);
+}
+mobileMenuToggle.addEventListener("click", () => {
+    setMobileMenu(mobileMenuToggle.getAttribute("aria-expanded") !== "true");
+});
+function applyDesign(design, save = false) {
+    document.documentElement.dataset.design = design;
+    designNormal.setAttribute("aria-pressed", String(design === "normal"));
+    designGlass.setAttribute("aria-pressed", String(design === "glass"));
+    window.requestAnimationFrame(() => map.invalidateSize());
+    if (save) {
+        try {
+            localStorage.setItem("nehlsen-design", design);
+        }
+        catch {
+            toast("Die Designauswahl kann auf diesem Gerät nicht gespeichert werden.");
+        }
+    }
+}
+applyDesign(preferredDesign());
+appearanceToggle.addEventListener("click", () => {
+    const open = appearanceToggle.getAttribute("aria-expanded") !== "true";
+    appearanceMenu.classList.toggle("hidden", !open);
+    appearanceToggle.setAttribute("aria-expanded", String(open));
+});
+designNormal.addEventListener("click", () => {
+    applyDesign("normal", true);
+    closeAppearanceMenu();
+    closeMobileMenu();
+});
+designGlass.addEventListener("click", () => {
+    applyDesign("glass", true);
+    closeAppearanceMenu();
+    closeMobileMenu();
+});
+listToggle.addEventListener("click", () => {
+    const expanded = listToggle.getAttribute("aria-expanded") !== "false";
+    const nextExpanded = !expanded;
+    workspace.classList.toggle("list-collapsed", !nextExpanded);
+    viewControls.classList.toggle("list-collapsed", !nextExpanded);
+    listToggle.setAttribute("aria-expanded", String(nextExpanded));
+    const action = nextExpanded ? "Standortliste ausblenden" : "Standortliste einblenden";
+    listToggle.setAttribute("aria-label", action);
+    listToggle.title = action;
+    window.requestAnimationFrame(() => map.invalidateSize());
+});
+workspace.addEventListener("transitionend", (event) => {
+    if (event.propertyName !== "grid-template-columns")
+        return;
+    window.requestAnimationFrame(() => map.invalidateSize());
+});
 function filteredLocations() {
     return filterLocations(locations, activeQuery, origin ?? undefined);
 }
@@ -110,10 +233,10 @@ function openSheet(location, options = {}) {
     const distance = origin ? `<div class="distance-note">ca. ${Math.round(distanceKm(origin, location))} km Luftlinie entfernt</div>` : "";
     byId("sBody").innerHTML = `<div class="co">${escapeHtml(location.company)}</div>
     <h2 id="sTitle">${escapeHtml(location.name)}</h2>${distance}
-    <div class="row"><span aria-hidden="true">⌖</span><span>${escapeHtml(location.address)}</span></div>
-    <div class="row"><span aria-hidden="true">☎</span><a href="tel:${location.phone.replace(/[^\d+]/g, "")}">${escapeHtml(location.phone)}</a></div>
-    <div class="row"><span aria-hidden="true">✉</span><a href="mailto:${escapeHtml(location.email)}">${escapeHtml(location.email)}</a></div>
-    <div class="row"><span aria-hidden="true">◷</span><span class="hours">${escapeHtml(location.hours)}</span></div>
+    <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>${escapeHtml(location.address)}</span></div>
+    <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.4 2.8a2 2 0 0 1-.6 1.7L7.5 9.6a16 16 0 0 0 6.9 6.9l1.4-1.4a2 2 0 0 1 1.7-.6l2.8.4a2 2 0 0 1 1.7 2Z"/></svg></span><a href="tel:${location.phone.replace(/[^\d+]/g, "")}">${escapeHtml(location.phone)}</a></div>
+    <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><a href="mailto:${escapeHtml(location.email)}">${escapeHtml(location.email)}</a></div>
+    <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="hours">${escapeHtml(location.hours)}</span></div>
     <div class="actions">
       <a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;destination=${destination}">Route starten</a>
       <a class="btn secondary" target="_blank" rel="noopener" href="https://maps.apple.com/?daddr=${destination}" aria-label="Route in Apple Karten">Apple Karten</a>
@@ -151,6 +274,7 @@ function closeSheet() {
 }
 function showTab(tab) {
     const showMap = tab === "map";
+    closeMobileMenu();
     mapTab.setAttribute("aria-selected", String(showMap));
     listTab.setAttribute("aria-selected", String(!showMap));
     mapTab.tabIndex = showMap ? 0 : -1;
@@ -200,7 +324,8 @@ listElement.addEventListener("click", (event) => {
     // Cluster bei Bedarf aufklappen, damit der Pin sichtbar ist.
     if (marker && markerCluster.hasLayer(marker)) {
         map.setView([location.lat, location.lng], Math.max(map.getZoom(), 14), { animate: false });
-        markerCluster.zoomToShowLayer(marker, openIt);
+        openIt();
+        markerCluster.zoomToShowLayer(marker, () => keepMarkerVisible(location));
     }
     else {
         map.setView([location.lat, location.lng], 14);
@@ -236,10 +361,23 @@ queryInput.addEventListener("input", () => {
     render();
 });
 closeButton.addEventListener("click", closeSheet);
+workspace.addEventListener("click", closeMobileMenu);
 // Klick auf eine freie Stelle der Karte schließt das Fenster; Ziehen/Zoomen nicht.
 map.on("click", closeSheet);
 document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && sheet.classList.contains("open")) {
+    if (event.key !== "Escape")
+        return;
+    if (!appearanceMenu.classList.contains("hidden")) {
+        event.preventDefault();
+        closeAppearanceMenu();
+        appearanceToggle.focus({ preventScroll: true });
+    }
+    else if (viewControls.classList.contains("menu-open")) {
+        event.preventDefault();
+        closeMobileMenu();
+        mobileMenuToggle.focus({ preventScroll: true });
+    }
+    if (sheet.classList.contains("open")) {
         event.preventDefault();
         closeSheet();
     }
@@ -273,6 +411,15 @@ nearButton.addEventListener("click", () => {
 });
 window.addEventListener("resize", () => showTab(mapTab.getAttribute("aria-selected") === "true" ? "map" : "list"));
 if ("serviceWorker" in navigator) {
+    if (navigator.serviceWorker.controller) {
+        let reloading = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (reloading)
+                return;
+            reloading = true;
+            window.location.reload();
+        });
+    }
     window.addEventListener("load", () => {
         navigator.serviceWorker.register("./sw.js").catch(() => toast("Offline-Speicherung konnte nicht aktiviert werden."));
     });

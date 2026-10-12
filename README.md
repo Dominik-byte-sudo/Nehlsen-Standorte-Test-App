@@ -16,6 +16,6 @@ Nach Änderungen an `src/` oder an den lokalen Kartenskripten `npm run build` au
 
 ## Offline-Betrieb und Karte
 
-Die Oberfläche, Standortdaten und Bibliotheken werden beim Installieren des Service Workers vorgeladen. Kartenkacheln von OpenStreetMap werden nur beim normalen Benutzen der Karte nachgeladen und begrenzt lokal zwischengespeichert; die vollständige Karte steht offline daher nicht garantiert zur Verfügung. OSM-Kacheln benötigen weiterhin eine Netzwerkverbindung und müssen gemäß der OpenStreetMap-Kachelrichtlinie verwendet werden.
+Die Oberfläche, Standortdaten und Bibliotheken werden beim Installieren des Service Workers vorgeladen. Kartenkacheln von OpenStreetMap werden über `https://tile.openstreetmap.org` nur beim normalen Benutzen der Karte nachgeladen und begrenzt lokal zwischengespeichert; die vollständige Karte steht offline daher nicht garantiert zur Verfügung. OSM-Kacheln benötigen weiterhin eine Netzwerkverbindung und müssen gemäß der OpenStreetMap-Kachelrichtlinie verwendet werden.
 
 Koordinaten und Öffnungszeiten vor einem produktiven Einsatz fachlich prüfen. Die Anwendung enthält keine Anmeldung oder Zugriffskontrolle; eine interne Bezeichnung ersetzt keine geschützte Bereitstellung.
