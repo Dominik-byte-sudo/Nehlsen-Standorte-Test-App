@@ -89,6 +89,14 @@ test("OpenStreetMap-Attribution ist vollständig und verlinkt", () => {
   assert.ok(appSource.includes("contributors"));
 });
 
+test("App and coordinate tool use OSM's current HTTPS tile endpoint", () => {
+  for (const source of [appSource, toolSource]) {
+    assert.match(source, /L\.tileLayer\("https:\/\/tile\.openstreetmap\.org\/\{z\}\/\{x\}\/\{y\}\.png"/);
+    assert.match(source, /referrerPolicy:\s*"strict-origin-when-cross-origin"/);
+    assert.doesNotMatch(source, /https:\/\/\{s\}\.tile\.openstreetmap\.org/);
+  }
+});
+
 test("Die gebauten Module verwenden nur relative JavaScript-Imports", () => {
   assert.ok(compiledApp.includes('from "./domain.js"'));
   assert.doesNotMatch(compiledApp + compiledTool, /from ["'](?:leaflet|leaflet\\.markercluster)["']/);
@@ -262,7 +270,7 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v36"/);
+  assert.match(sw, /const VERSION = "v37"/);
 });
 
 test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {
