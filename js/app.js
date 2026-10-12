@@ -410,6 +410,15 @@ nearButton.addEventListener("click", () => {
 });
 window.addEventListener("resize", () => showTab(mapTab.getAttribute("aria-selected") === "true" ? "map" : "list"));
 if ("serviceWorker" in navigator) {
+    if (navigator.serviceWorker.controller) {
+        let reloading = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (reloading)
+                return;
+            reloading = true;
+            window.location.reload();
+        });
+    }
     window.addEventListener("load", () => {
         navigator.serviceWorker.register("./sw.js").catch(() => toast("Offline-Speicherung konnte nicht aktiviert werden."));
     });

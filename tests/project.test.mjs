@@ -78,8 +78,9 @@ test("Offline-Kernressourcen werden lokal vorab gecacht", async () => {
     assert.ok(coreBlock.includes(path), `CORE missing ${path}`);
     await access(new URL(path, root));
   }
-  assert.ok(sw.includes("cache.addAll(CORE)"));
+  assert.ok(sw.includes('cache.addAll(CORE.map((path) => new Request(path, { cache: "reload" })))'));
   assert.ok(sw.includes("const TILE_LIMIT = 500"));
+  assert.match(appSource, /navigator\.serviceWorker\.addEventListener\("controllerchange"[\s\S]*?window\.location\.reload\(\)/);
   assert.doesNotMatch(html + toolHtml, /https:\/\/(?:unpkg\.com|fonts\.googleapis\.com)/);
 });
 
@@ -261,7 +262,7 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v35"/);
+  assert.match(sw, /const VERSION = "v36"/);
 });
 
 test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {
