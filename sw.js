@@ -1,5 +1,5 @@
 // Bump the version whenever a cached app asset changes.
-const VERSION = "v25";
+const VERSION = "v35";
 const APP_CACHE = `app-${VERSION}`;
 const TILE_CACHE = `tiles-${VERSION}`;
 const CORE = [

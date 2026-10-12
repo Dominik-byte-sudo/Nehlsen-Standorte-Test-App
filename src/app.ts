@@ -18,9 +18,11 @@ const queryInput = byId<HTMLInputElement>("q");
 const nearButton = byId<HTMLButtonElement>("nearBtn");
 const sheet = byId<HTMLElement>("sheet");
 const closeButton = byId<HTMLButtonElement>("sClose");
+const viewControls = byId<HTMLElement>("viewControls");
 const tabs = document.querySelector<HTMLElement>(".tabs");
 const mapTab = byId<HTMLButtonElement>("tMap");
 const listTab = byId<HTMLButtonElement>("tList");
+const mobileMenuToggle = byId<HTMLButtonElement>("mobileMenuToggle");
 const toastElement = byId<HTMLDivElement>("toast");
 const workspace = byId<HTMLElement>("workspace");
 const listToggle = byId<HTMLButtonElement>("listToggle");
@@ -56,7 +58,7 @@ let toastTimer: number | undefined;
 let lastFocusedElement: HTMLElement | null = null;
 const locationMarkers = new Map<string, L.Marker>();
 
-const isDesktop = (): boolean => window.matchMedia("(min-width: 800px)").matches;
+const isDesktop = (): boolean => window.matchMedia("(min-width: 1024px)").matches;
 
 function toast(message: string): void {
   toastElement.textContent = message;
@@ -99,6 +101,7 @@ function applyTheme(theme: ColorTheme, save = false): void {
 applyTheme(preferredTheme());
 themeToggle.addEventListener("click", () => {
   applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  closeMobileMenu();
 });
 
 function preferredDesign(): DesignStyle {
@@ -116,10 +119,28 @@ function closeAppearanceMenu(): void {
   appearanceToggle.setAttribute("aria-expanded", "false");
 }
 
+function setMobileMenu(open: boolean): void {
+  if (!open) closeAppearanceMenu();
+  viewControls.classList.toggle("menu-open", open);
+  mobileMenuToggle.setAttribute("aria-expanded", String(open));
+  const action = open ? "Einstellungen schließen" : "Einstellungen öffnen";
+  mobileMenuToggle.setAttribute("aria-label", action);
+  mobileMenuToggle.title = action;
+}
+
+function closeMobileMenu(): void {
+  setMobileMenu(false);
+}
+
+mobileMenuToggle.addEventListener("click", () => {
+  setMobileMenu(mobileMenuToggle.getAttribute("aria-expanded") !== "true");
+});
+
 function applyDesign(design: DesignStyle, save = false): void {
   document.documentElement.dataset.design = design;
   designNormal.setAttribute("aria-pressed", String(design === "normal"));
   designGlass.setAttribute("aria-pressed", String(design === "glass"));
+  window.requestAnimationFrame(() => map.invalidateSize());
   if (save) {
     try {
       localStorage.setItem("nehlsen-design", design);
@@ -138,15 +159,18 @@ appearanceToggle.addEventListener("click", () => {
 designNormal.addEventListener("click", () => {
   applyDesign("normal", true);
   closeAppearanceMenu();
+  closeMobileMenu();
 });
 designGlass.addEventListener("click", () => {
   applyDesign("glass", true);
   closeAppearanceMenu();
+  closeMobileMenu();
 });
 listToggle.addEventListener("click", () => {
   const expanded = listToggle.getAttribute("aria-expanded") !== "false";
   const nextExpanded = !expanded;
   workspace.classList.toggle("list-collapsed", !nextExpanded);
+  viewControls.classList.toggle("list-collapsed", !nextExpanded);
   listToggle.setAttribute("aria-expanded", String(nextExpanded));
   const action = nextExpanded ? "Standortliste ausblenden" : "Standortliste einblenden";
   listToggle.setAttribute("aria-label", action);
@@ -276,6 +300,7 @@ function closeSheet(): void {
 
 function showTab(tab: "map" | "list"): void {
   const showMap = tab === "map";
+  closeMobileMenu();
   mapTab.setAttribute("aria-selected", String(showMap));
   listTab.setAttribute("aria-selected", String(!showMap));
   mapTab.tabIndex = showMap ? 0 : -1;
@@ -352,6 +377,7 @@ queryInput.addEventListener("input", () => {
 });
 
 closeButton.addEventListener("click", closeSheet);
+workspace.addEventListener("click", closeMobileMenu);
 // Klick auf eine freie Stelle der Karte schließt das Fenster; Ziehen/Zoomen nicht.
 map.on("click", closeSheet);
 document.addEventListener("keydown", (event) => {
@@ -360,6 +386,10 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     closeAppearanceMenu();
     appearanceToggle.focus({ preventScroll: true });
+  } else if (viewControls.classList.contains("menu-open")) {
+    event.preventDefault();
+    closeMobileMenu();
+    mobileMenuToggle.focus({ preventScroll: true });
   }
   if (sheet.classList.contains("open")) {
     event.preventDefault();

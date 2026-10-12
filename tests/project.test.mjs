@@ -35,7 +35,8 @@ test("App und Koordinaten-Werkzeug verwenden dieselbe Standortdatei", () => {
 test("PWA ermöglicht Hoch- und Querformat", () => assert.equal(manifest.orientation, undefined));
 
 test("Desktop erhält eine breite Karten-und-Liste-Ansicht", () => {
-  assert.match(css, /@media\s*\(min-width:\s*800px\)/);
+  assert.match(css, /@media\s*\(min-width:\s*1024px\)/);
+  assert.match(appSource, /matchMedia\("\(min-width: 1024px\)"\)/);
   assert.match(css, /grid-template-columns\s*:\s*(?:var\(--locations-panel-width\)\s+)?minmax\(/);
   assert.match(css, /#map\.hidden[^{]*\{[^}]*display:\s*block\s*!important/s);
   assert.match(css, /#list\.hidden[^{]*\{[^}]*display:\s*block\s*!important/s);
@@ -134,10 +135,15 @@ test("Der Nehlsen-Markenauftritt sitzt rechts in der Kopfzeile und skaliert resp
   assert.match(css, /width:\s*clamp\(250px,\s*28vw,\s*420px\)/);
 });
 
-test("Theme-Schalter liegt in einer eigenen unteren Box und verdeckt keinen Inhalt", () => {
-  assert.match(html, /<main[^>]*>[\s\S]*?<\/main>\s*<footer class="theme-dock"[^>]*>[\s\S]*?id="themeToggle"[\s\S]*?<\/footer>/);
-  assert.match(css, /\.theme-dock\s*\{[^}]*border-radius:\s*999px/s);
-  assert.match(css, /\.theme-dock\s*\{[^}]*flex:\s*0 0 auto/s);
+test("Theme-Steuerung bleibt auf Desktop in einer festen Box und auf Mobilgeräten in einer Burger-Pill", () => {
+  assert.match(html, /<div class="view-controls" id="viewControls">[\s\S]*?<div class="tabs"[\s\S]*?id="mobileMenuToggle"[^>]+aria-controls="themeDock"[\s\S]*?<footer class="theme-dock" id="themeDock"[\s\S]*?id="themeToggle"[\s\S]*?<\/footer>/);
+  assert.match(css, /html\[data-design="glass"\] \.theme-dock\s*\{[^}]*border-radius:\s*14px/s);
+  assert.match(css, /\.theme-dock\s*\{[^}]*position:\s*absolute/s);
+  assert.match(css, /@media\s*\(min-width:\s*1024px\)[\s\S]*?\.theme-dock\s*\{[^}]*width:\s*var\(--locations-panel-width\)[^}]*height:\s*60px/s);
+  assert.match(css, /@media\s*\(max-width:\s*1023px\)[\s\S]*?\.view-controls\.menu-open \.theme-dock\s*\{\s*display:\s*flex;/s);
+  assert.match(css, /#list,\s*#list\.hidden\s*\{[^}]*height:\s*calc\(100% - var\(--theme-dock-reserve\)\)/s);
+  assert.match(css, /--theme-dock-reserve:\s*calc\(60px \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(css, /border-radius:\s*0 0 14px 14px/);
 });
 
 test("Desktop-Standortliste lässt sich mit einer zugänglichen Schaltfläche ein- und ausklappen", () => {
@@ -147,16 +153,17 @@ test("Desktop-Standortliste lässt sich mit einer zugänglichen Schaltfläche ei
   assert.match(css, /main\.list-collapsed\s*\{[^}]*grid-template-columns:\s*0 minmax\(0,\s*1fr\)/s);
   assert.match(css, /\.list-toggle\s*\{[^}]*display:\s*inline-flex;[^}]*var\(--surface\)/s);
   assert.match(css, /\.list-toggle\s*\{[^}]*display:\s*inline-flex;[^}]*var\(--ink\)/s);
+  assert.match(css, /\.list-toggle\s*\{[^}]*width:\s*36px;[^}]*height:\s*48px;[^}]*border-radius:\s*999px/s);
+  assert.match(css, /html\[data-design="glass"\] \.list-toggle\s*\{[^}]*background:\s*var\(--glass-surface\)/s);
 });
 
-test("Theme-Dock reicht am Desktop nur bis zur Standortliste und schrumpft im eingeklappten Zustand", () => {
-  assert.match(css, /--locations-panel-width:\s*clamp\(300px,\s*28vw,\s*380px\)/);
-  assert.match(css, /\.theme-dock\s*\{[^}]*width:\s*var\(--locations-panel-width\)/s);
-  assert.match(css, /#workspace\.list-collapsed\s*\+\s*\.theme-dock\s*\{[^}]*width:\s*max-content/s);
+test("Theme-Dock wird kompakt, wenn die Desktop-Liste eingeklappt ist", () => {
+  assert.match(css, /\.view-controls\.list-collapsed \.theme-dock\s*\{[^}]*width:\s*max-content/s);
 });
 
 test("Designrad bietet Normal und Liquid Glass als unabhängig gespeicherte Darstellung", () => {
   assert.match(html, /id="appearanceToggle"[^>]+aria-controls="appearanceMenu"/);
+  assert.match(html, /id="mobileMenuToggle"[^>]+aria-controls="themeDock"/);
   const designTrigger = html.match(/<button[^>]*id="appearanceToggle"[^>]*>/)?.[0] ?? "";
   assert.doesNotMatch(designTrigger, /aria-haspopup/, "the disclosed controls are a group, not an ARIA menu popup");
   assert.match(html, /id="appearanceMenu"[^>]*role="group"[\s\S]*?id="designNormal"[\s\S]*?id="designGlass"/);
@@ -165,13 +172,15 @@ test("Designrad bietet Normal und Liquid Glass als unabhängig gespeicherte Dars
   assert.match(css, /html\[data-design="glass"\]/);
   assert.match(css, /backdrop-filter:\s*blur/);
   assert.match(css, /@supports\s*\(backdrop-filter:\s*blur/);
+  const applyDesignBody = appSource.match(/function applyDesign\(design: DesignStyle, save = false\): void \{([\s\S]*?)\n\}/)?.[1] ?? "";
+  assert.match(applyDesignBody, /window\.requestAnimationFrame\(\(\) => map\.invalidateSize\(\)\)/);
   assert.match(css, /\.theme-dock\s*\{[^}]*z-index:\s*1100/s, "the control pill must stay above an open mobile detail sheet");
   assert.equal((appSource + compiledApp).includes("liquid-glass"), false);
   assert.equal(sw.includes("js/liquid-glass.js"), false);
 });
 
 test("Liquid Glass umfasst Kopfzeile, mobilen Ansichtswechsel und die gesamte Standortliste", () => {
-  for (const selector of ['html[data-design="glass"] .app-header', 'html[data-design="glass"] .app-header::before', 'html[data-design="glass"] .search input', 'html[data-design="glass"] .near', 'html[data-design="glass"] .tabs', 'html[data-design="glass"] #list', 'html[data-design="glass"] .item-wrap']) {
+  for (const selector of ['html[data-design="glass"] .app-header', 'html[data-design="glass"] .app-header::before', 'html[data-design="glass"] .search input', 'html[data-design="glass"] .near', 'html[data-design="glass"] .tabs', 'html[data-design="glass"] #list', 'html[data-design="glass"] .item-wrap', 'html[data-design="glass"] .leaflet-control-zoom.leaflet-bar', 'html[data-design="glass"] .leaflet-control-zoom a', 'html[data-design="glass"] .pin', 'html[data-design="glass"] .me', 'html[data-design="glass"] .marker-cluster-small', 'html[data-design="glass"] .marker-cluster-small div']) {
     assert.ok(css.includes(selector), `Missing glass treatment for ${selector}`);
   }
   for (const source of [appSource, compiledApp]) {
@@ -179,14 +188,31 @@ test("Liquid Glass umfasst Kopfzeile, mobilen Ansichtswechsel und die gesamte St
   }
   assert.ok(!css.includes("backdrop-filter: blur(24px)"), "large glass surfaces should not use an expensive 24px blur");
   const listGlassRule = css.slice(css.indexOf('html[data-design="glass"] #list {')).split("}")[0];
-  assert.ok(listGlassRule.includes("backdrop-filter: blur(4px)"), "the list pane should use a moderate blur");
+  assert.ok(listGlassRule.includes("backdrop-filter: blur(12px)"), "the list pane should blur the map beneath its glass surface");
   assert.ok(listGlassRule.includes("scrollbar-width: thin"), "the list scrollbar should be deliberately thin");
   assert.ok(listGlassRule.includes("scrollbar-color:"), "the native scrollbar should match the glass palette");
+  assert.ok(listGlassRule.includes("radial-gradient("), "the list pane should have a liquid-glass highlight");
+  assert.ok(listGlassRule.includes("inset 1px 0 0 var(--glass-highlight)"), "the list pane should have a glass edge highlight");
   assert.ok(css.includes('html[data-design="glass"] #list::-webkit-scrollbar-thumb'), "the WebKit scrollbar thumb should have glass-specific styling");
+  assert.ok(css.includes("linear-gradient(145deg, rgb(255 255 255 / 68%), rgb(255 255 255 / 28%))"), "the WebKit scrollbar thumb should have a translucent glass gradient");
+  assert.ok(css.includes('html[data-design="glass"] #list::-webkit-scrollbar-track'), "the WebKit scrollbar track should have glass-specific styling");
+  const mapFilterStart = css.lastIndexOf("@supports (backdrop-filter: blur(1px))");
+  const mapGlassStart = css.lastIndexOf('html[data-design="glass"] .leaflet-control-zoom.leaflet-bar {', mapFilterStart);
+  const mapGlassStyles = css.slice(mapGlassStart, mapFilterStart);
+  const mapGlassFilters = css.slice(mapFilterStart);
+  assert.match(mapGlassStyles, /html\[data-design="glass"\] \.marker-cluster-small,[\s\S]*?background:\s*transparent !important;/);
+  assert.doesNotMatch(mapGlassStyles, /backdrop-filter/);
+  assert.match(mapGlassFilters, /leaflet-control-zoom\.leaflet-bar[\s\S]*?backdrop-filter:\s*blur\(4px\) saturate\(1\.15\)/);
+  assert.doesNotMatch(mapGlassFilters, /\.pin|\.me|marker-cluster-/);
+  const desktopGlassLayout = css.slice(css.lastIndexOf("@media (min-width: 1024px) {"));
+  assert.match(desktopGlassLayout, /html\[data-design="glass"\] #workspace\s*\{\s*display:\s*block;/);
+  assert.match(desktopGlassLayout, /html\[data-design="glass"\] #workspace #map\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*0;/s);
+  assert.match(desktopGlassLayout, /html\[data-design="glass"\] #workspace #list\s*\{[^}]*position:\s*absolute;[^}]*width:\s*var\(--locations-panel-width\)/s);
 });
 
 test("Inline icons use crisp, consistent SVGs instead of glyph characters", () => {
   assert.match(html, /id="appearanceToggle"[\s\S]*?<svg[^>]+viewBox="0 0 24 24"/);
+  assert.match(html, /id="mobileMenuToggle"[\s\S]*?<svg[^>]+viewBox="0 0 24 24"/);
   assert.match(html, /id="sClose"[^>]*><svg[^>]+viewBox="0 0 24 24"/);
   assert.match(appSource, /class="row-icon"/);
   assert.doesNotMatch(appSource, /⌖|☎|✉|◷/);
@@ -235,7 +261,7 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v25"/);
+  assert.match(sw, /const VERSION = "v35"/);
 });
 
 test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {

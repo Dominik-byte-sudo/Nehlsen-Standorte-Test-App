@@ -88,9 +88,11 @@ const desktop = await evaluate(`(() => {
     listWidth: list.getBoundingClientRect().width,
     listLeft: list.getBoundingClientRect().left,
     listRight: list.getBoundingClientRect().right,
+    listBottom: list.getBoundingClientRect().bottom,
     dockWidth: dock.getBoundingClientRect().width,
     dockLeft: dock.getBoundingClientRect().left,
     dockRight: dock.getBoundingClientRect().right,
+    dockTop: dock.getBoundingClientRect().top,
     theme: document.documentElement.dataset.theme,
     green: getComputedStyle(document.documentElement).getPropertyValue("--green").trim(),
     headerBackground: getComputedStyle(document.querySelector("header")).backgroundColor,
@@ -99,7 +101,7 @@ const desktop = await evaluate(`(() => {
     toggleColors: { foreground:getComputedStyle(toggle).color, background:getComputedStyle(toggle).backgroundColor }
   };
 })()`);
-if (desktop.width < 1300 || desktop.map === "none" || desktop.list === "none" || desktop.count !== 43 || desktop.toggleDisplay === "none" || desktop.expanded !== "true" || desktop.green !== "#6ab023" || desktop.headerBackground !== "rgb(106, 176, 35)" || desktop.brandCopyColor !== "rgb(12, 18, 14)" || desktop.mapDotColor !== "#456f1c" || Math.abs(desktop.listLeft - desktop.dockLeft) > 1 || Math.abs(desktop.listRight - desktop.dockRight) > 1 || desktop.dockRight > desktop.width / 2) {
+if (desktop.width < 1300 || desktop.map === "none" || desktop.list === "none" || desktop.count !== 43 || desktop.toggleDisplay === "none" || desktop.expanded !== "true" || desktop.green !== "#6ab023" || desktop.headerBackground !== "rgb(106, 176, 35)" || desktop.brandCopyColor !== "rgb(12, 18, 14)" || desktop.mapDotColor !== "#456f1c" || Math.abs(desktop.listLeft - desktop.dockLeft) > 1 || Math.abs(desktop.listRight - desktop.dockRight) > 1 || Math.abs(desktop.listBottom - desktop.dockTop) > 1 || desktop.dockRight > desktop.width / 2) {
   throw new Error(`Desktop layout check failed: ${JSON.stringify(desktop)}`);
 }
 await evaluate('document.querySelector("#listToggle").click()');
@@ -107,7 +109,7 @@ await waitFor('document.querySelector("#workspace").classList.contains("list-col
 await new Promise((resolve) => setTimeout(resolve, 350));
 const folded = await evaluate(`(() => {
   const map=document.querySelector("#map").getBoundingClientRect(), list=document.querySelector("#list"), dock=document.querySelector(".theme-dock").getBoundingClientRect(), toggle=document.querySelector("#listToggle");
-  return { expanded:toggle.getAttribute("aria-expanded"), label:toggle.getAttribute("aria-label"), viewportWidth:innerWidth, appWidth:document.querySelector("#app").getBoundingClientRect().width, mainWidth:document.querySelector("#workspace").getBoundingClientRect().width, mainClass:document.querySelector("#workspace").className, mainMatches:document.querySelector("#workspace").matches("main.list-collapsed"), desktopMedia:matchMedia("(min-width: 800px)").matches, inlineGrid:document.querySelector("#workspace").style.gridTemplateColumns, collapsedRules:[...document.styleSheets].flatMap(sheet=>[...sheet.cssRules]).filter(rule=>rule.cssText.includes("list-collapsed")).map(rule=>rule.cssText), grid:getComputedStyle(document.querySelector("#workspace")).gridTemplateColumns, mapWidth:map.width, listWidth:list.getBoundingClientRect().width, dockWidth:dock.width, dockRight:dock.right, themeButtonRight:document.querySelector("#themeToggle").getBoundingClientRect().right };
+  return { expanded:toggle.getAttribute("aria-expanded"), label:toggle.getAttribute("aria-label"), viewportWidth:innerWidth, appWidth:document.querySelector("#app").getBoundingClientRect().width, mainWidth:document.querySelector("#workspace").getBoundingClientRect().width, mainClass:document.querySelector("#workspace").className, mainMatches:document.querySelector("#workspace").matches("main.list-collapsed"), desktopMedia:matchMedia("(min-width: 1024px)").matches, inlineGrid:document.querySelector("#workspace").style.gridTemplateColumns, collapsedRules:[...document.styleSheets].flatMap(sheet=>[...sheet.cssRules]).filter(rule=>rule.cssText.includes("list-collapsed")).map(rule=>rule.cssText), grid:getComputedStyle(document.querySelector("#workspace")).gridTemplateColumns, mapWidth:map.width, listWidth:list.getBoundingClientRect().width, dockWidth:dock.width, dockRight:dock.right, themeButtonRight:document.querySelector("#themeToggle").getBoundingClientRect().right };
 })()`);
 if (folded.expanded !== "false" || folded.label !== "Standortliste einblenden" || folded.mapWidth < desktop.width - 5 || folded.listWidth !== 0 || folded.dockWidth >= desktop.dockWidth || folded.themeButtonRight > folded.dockRight + 1 || folded.dockRight > desktop.width / 2) {
   throw new Error(`Desktop folded-list check failed: ${JSON.stringify(folded)}`);
@@ -166,12 +168,15 @@ await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: fal
   const fs = await import("node:fs/promises");
   await fs.writeFile("C:/Users/fkaempfe/AppData/Local/hermes/cache/scratch/nehlsen-mobile-smoke.png", Buffer.from(data, "base64"));
 });
+await pointerClick("#mobileMenuToggle");
+await assert('document.querySelector("#mobileMenuToggle").getAttribute("aria-expanded") === "true" && getComputedStyle(document.querySelector("#themeDock")).display !== "none"', "The mobile settings pill did not open.");
 await pointerClick("#appearanceToggle");
 await assert('document.querySelector("#appearanceToggle").getAttribute("aria-expanded") === "true" && !document.querySelector("#appearanceMenu").classList.contains("hidden")', "The design wheel is covered by the open mobile detail sheet.");
 await pointerClick("#designGlass");
-await assert('document.documentElement.dataset.design === "glass" && localStorage.getItem("nehlsen-design") === "glass"', "Mobile Liquid Glass selection did not apply.");
+await assert('document.documentElement.dataset.design === "glass" && localStorage.getItem("nehlsen-design") === "glass" && document.querySelector("#mobileMenuToggle").getAttribute("aria-expanded") === "false"', "Mobile Liquid Glass selection did not apply or close the settings pill.");
 const opticalGlass = await evaluate('({dockZ:getComputedStyle(document.querySelector("#themeDock")).zIndex,sheetFilter:getComputedStyle(document.querySelector("#sheet")).backdropFilter,menuFilter:getComputedStyle(document.querySelector("#appearanceMenu")).backdropFilter})');
 if (Number(opticalGlass.dockZ) <= 1001 || !opticalGlass.sheetFilter.includes("blur(6px)")) throw new Error(`Mobile glass layer/performance check failed: ${JSON.stringify(opticalGlass)}`);
+await pointerClick("#mobileMenuToggle");
 await pointerClick("#appearanceToggle");
 await assert('document.querySelector("#appearanceToggle").getAttribute("aria-expanded") === "true" && !document.querySelector("#appearanceMenu").classList.contains("hidden")', "The design wheel did not reopen while Liquid Glass is active.");
 await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false }).then(async ({ data }) => {
@@ -193,26 +198,27 @@ if (landscape.width !== 844 || landscape.height !== 390 || landscape.overflow ||
   throw new Error(`Mobile landscape check failed: ${JSON.stringify(landscape)}`);
 }
 
-const responsiveWidths = [320, 360, 390, 520, 521, 768, 800, 1024, 1440];
+const responsiveWidths = [320, 360, 390, 520, 521, 768, 800, 1023, 1024, 1440];
 const responsive = [];
 for (const width of responsiveWidths) {
   const height = width <= 520 ? 844 : 900;
   await setViewport(width, height, width <= 520);
   const layout = await evaluate(`(() => {
     const box=(selector)=>document.querySelector(selector).getBoundingClientRect();
-    const logo=box(".brand-logo"), brand=box(".brand-copy"), dock=box(".theme-dock"), main=box("main");
+    const logo=box(".brand-logo"), brand=box(".brand-copy"), dock=box(".theme-dock"), main=box("main"), tabs=box(".tabs"), menuToggle=box("#mobileMenuToggle");
     const input=getComputedStyle(document.querySelector("#q"));
     const near=getComputedStyle(document.querySelector("#nearBtn"));
     return {
       width:innerWidth, overflow:document.documentElement.scrollWidth>innerWidth,
       logoWidth:logo.width, logoRight:logo.right, brandRight:brand.right,
-      dockTop:dock.top, dockBottom:dock.bottom, dockLeft:dock.left, mainBottom:main.bottom,
-      dockPosition:getComputedStyle(document.querySelector(".theme-dock")).position,
+      dockTop:dock.top, dockBottom:dock.bottom, dockLeft:dock.left, dockWidth:dock.width, dockDisplay:getComputedStyle(document.querySelector(".theme-dock")).display, dockPosition:getComputedStyle(document.querySelector(".theme-dock")).position, mainBottom:main.bottom,
+      menuToggleDisplay:getComputedStyle(document.querySelector("#mobileMenuToggle")).display, menuToggleLeft:menuToggle.left, tabsRight:tabs.right,
       colorsMatch:input.color===near.color && input.backgroundColor===near.backgroundColor,
       theme:document.documentElement.dataset.theme
     };
   })()`);
-  if (layout.overflow || layout.logoWidth < 130 || layout.logoRight > width + 1 || layout.brandRight > layout.logoRight - layout.logoWidth + 1 || layout.dockBottom > height + 1 || layout.dockPosition !== "relative" || layout.dockTop < layout.mainBottom - 1 || !layout.colorsMatch) {
+  const mobileControls = width < 1024;
+  if (layout.overflow || layout.logoWidth < 130 || layout.logoRight > width + 1 || layout.brandRight > layout.logoRight - layout.logoWidth + 1 || layout.dockBottom > height + 1 || layout.dockPosition !== "absolute" || !layout.colorsMatch || (mobileControls && (layout.menuToggleDisplay === "none" || layout.dockDisplay !== "none" || layout.menuToggleLeft < layout.tabsRight)) || (!mobileControls && (layout.menuToggleDisplay !== "none" || layout.dockDisplay === "none" || layout.dockWidth < 200 || layout.dockTop < layout.mainBottom - 100))) {
     throw new Error(`Responsive layout failed at ${width}px: ${JSON.stringify(layout)}`);
   }
   await evaluate('document.querySelector("#themeToggle").click()');

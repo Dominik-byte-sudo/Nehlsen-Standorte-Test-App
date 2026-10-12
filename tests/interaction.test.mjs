@@ -25,9 +25,10 @@ class ElementMock {
   get isConnected() { return true; }
   getBoundingClientRect() { return { top: 100, left: 100, right: 900, bottom: 700 }; }
 }
-const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "listToggle", "appearanceToggle", "appearanceMenu", "designNormal", "designGlass"];
+const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "designNormal", "designGlass"];
 const els = Object.fromEntries(ids.map((id) => [id, new ElementMock(id)]));
 els.workspace.classList = new Classes();
+els.appearanceMenu.classList.add("hidden");
 els.listToggle.setAttribute("aria-expanded", "true");
 els.listToggle.setAttribute("aria-label", "Standortliste ausblenden");
 els.sheet.inert = true;
@@ -188,4 +189,20 @@ test("Designrad öffnet Auswahl und speichert zwischen normalem und Liquid-Glass
   assert.equal(document.documentElement.dataset.design, "normal");
   assert.equal(localStorage.getItem("nehlsen-design"), "normal");
   assert.equal(els.appearanceMenu.classList.contains("hidden"), true);
+});
+
+test("Mobiles Einstellungsmenü öffnet als Burger-Pill und schließt mit Escape", () => {
+  const onToggle = els.mobileMenuToggle.listeners.click?.[0];
+  assert.equal(typeof onToggle, "function", "the mobile settings pill should toggle its controls");
+  onToggle();
+  assert.equal(els.viewControls.classList.contains("menu-open"), true);
+  assert.equal(els.mobileMenuToggle.getAttribute("aria-expanded"), "true");
+  assert.equal(els.mobileMenuToggle.getAttribute("aria-label"), "Einstellungen schließen");
+
+  const escape = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+  docListeners.keydown[0](escape);
+  assert.equal(escape.defaultPrevented, true);
+  assert.equal(els.viewControls.classList.contains("menu-open"), false);
+  assert.equal(els.mobileMenuToggle.getAttribute("aria-expanded"), "false");
+  assert.equal(document.activeElement, els.mobileMenuToggle);
 });
