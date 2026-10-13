@@ -13,6 +13,9 @@ const queryInput = byId("q");
 const nearButton = byId("nearBtn");
 const sheet = byId("sheet");
 const closeButton = byId("sClose");
+const sheetGrab = sheet.querySelector(".grab");
+if (!sheetGrab)
+    throw new Error("Missing required element .grab");
 const viewControls = byId("viewControls");
 const tabs = document.querySelector(".tabs");
 const mapTab = byId("tMap");
@@ -272,6 +275,61 @@ function closeSheet() {
     }
     lastFocusedElement = null;
 }
+let dragStartY = null;
+let dragStartTime = 0;
+let didMoveGrab = false;
+let suppressPointerClickUntil = 0;
+function resetSheetDrag() {
+    dragStartY = null;
+    sheet.classList.remove("is-dragging");
+    sheet.style.removeProperty("--sheet-drag-offset");
+}
+sheetGrab.addEventListener("pointerdown", (event) => {
+    if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0))
+        return;
+    dragStartY = event.clientY;
+    dragStartTime = performance.now();
+    didMoveGrab = false;
+    sheetGrab.setPointerCapture(event.pointerId);
+});
+sheetGrab.addEventListener("pointermove", (event) => {
+    if (dragStartY === null)
+        return;
+    const distance = event.clientY - dragStartY;
+    if (Math.abs(distance) > 8)
+        didMoveGrab = true;
+    sheet.classList.add("is-dragging");
+    sheet.style.setProperty("--sheet-drag-offset", `${Math.max(0, distance)}px`);
+});
+sheetGrab.addEventListener("pointerup", (event) => {
+    if (dragStartY === null)
+        return;
+    const distance = event.clientY - dragStartY;
+    const elapsed = Math.max(1, performance.now() - dragStartTime);
+    const speed = distance / elapsed;
+    const shouldClose = distance >= 80 || (distance >= 28 && speed >= 0.55);
+    const moved = didMoveGrab;
+    if (sheetGrab.hasPointerCapture(event.pointerId)) {
+        sheetGrab.releasePointerCapture(event.pointerId);
+    }
+    resetSheetDrag();
+    if (moved)
+        suppressPointerClickUntil = performance.now() + 400;
+    if (shouldClose)
+        closeSheet();
+});
+sheetGrab.addEventListener("pointercancel", () => {
+    resetSheetDrag();
+    didMoveGrab = false;
+});
+sheetGrab.addEventListener("click", (event) => {
+    if (event.detail > 0 && performance.now() < suppressPointerClickUntil) {
+        event.preventDefault();
+        suppressPointerClickUntil = 0;
+        return;
+    }
+    closeSheet();
+});
 function showTab(tab) {
     const showMap = tab === "map";
     closeMobileMenu();

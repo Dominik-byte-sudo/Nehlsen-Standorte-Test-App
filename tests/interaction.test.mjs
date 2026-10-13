@@ -18,14 +18,19 @@ class ElementMock {
   setAttribute(name, value) { this.attrs.set(name, value); }
   getAttribute(name) { return this.attrs.get(name) ?? null; }
   querySelectorAll() { return []; }
-  querySelector() { return null; }
-  contains(other) { return other === this || (this.id === "sheet" && [els.sBody, els.sClose].includes(other)); }
+  querySelector(selector) {
+  return this.id === "sheet" && selector === ".grab" ? els.grab : null;
+}
+  contains(other) {
+  return other === this ||
+    (this.id === "sheet" && [els.sBody, els.sClose, els.grab].includes(other));
+}
   focus() { globalThis.document.activeElement = this; }
   closest(selector) { return selector === ".hidden" && this.classList.contains("hidden") ? this : null; }
   get isConnected() { return true; }
   getBoundingClientRect() { return { top: 100, left: 100, right: 900, bottom: 700 }; }
 }
-const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "designNormal", "designGlass"];
+const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "designNormal", "designGlass"];
 const els = Object.fromEntries(ids.map((id) => [id, new ElementMock(id)]));
 els.workspace.classList = new Classes();
 els.appearanceMenu.classList.add("hidden");

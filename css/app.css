@@ -884,3 +884,47 @@ html[data-design="glass"] .marker-cluster-large div {
     backdrop-filter: blur(4px) saturate(1.15);
   }
 }
+/* Griffleiste: gut antippbar und ziehbar */
+.grab {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 40px;
+  margin: -6px auto 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  touch-action: none;
+  cursor: grab;
+}
+
+.grab:active {
+  cursor: grabbing;
+}
+
+.grab::before {
+  position: absolute;
+  top: 18px;
+  left: 12px;
+  width: 40px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--line);
+  content: "";
+}
+
+.grab:hover::before,
+.grab:active::before {
+  background: var(--accent-green);
+}
+
+.grab:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.sheet.open.is-dragging {
+  transition: none;
+  transform: translateY(var(--sheet-drag-offset, 0px));
+}
