@@ -269,6 +269,15 @@ function openSheet(location: Location, options: OpenSheetOptions = {}): void {
       <a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;destination=${destination}">Route starten</a>
       <a class="btn secondary" target="_blank" rel="noopener" href="https://maps.apple.com/?daddr=${destination}" aria-label="Route in Apple Karten">Apple Karten</a>
     </div>`;
+    const detailBody = byId<HTMLDivElement>("sBody");
+
+if (!location.phone) {
+  detailBody.querySelector('a[href^="tel:"]')?.closest(".row")?.remove();
+}
+
+if (!location.hours) {
+  detailBody.querySelector(".hours")?.closest(".row")?.remove();
+}
   sheet.scrollTop = 0;
 
   const wasOpen = sheet.classList.contains("open");

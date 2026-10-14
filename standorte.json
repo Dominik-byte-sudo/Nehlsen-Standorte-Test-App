@@ -471,5 +471,37 @@
     "hours": "Mo–Do 8.00–17.00\nFr 8.00–16.00",
     "lat": 53.137877,
     "lng": 8.696183
-  }
+  },{
+  "id": "biotherm Hagenow GmbH|Standort Hagenow",
+  "company": "biotherm Hagenow GmbH",
+  "name": "Standort Hagenow",
+  "address": "Dr.-Raber-Straße 8, 19230 Hagenow",
+  "phone": "03883 6133-0",
+  "email": "info@biotherm-hagenow.de",
+  "hours": "Mo–Fr 8:00–15:00",
+  "lat": 53.4167303,
+  "lng": 11.1911498
+},
+{
+  "id": "biotherm Hagenow GmbH|Standort Neubrandenburg",
+  "company": "biotherm Hagenow GmbH",
+  "name": "Standort Neubrandenburg",
+  "address": "Warliner Straße 25, 17034 Neubrandenburg",
+  "phone": "0395 777539-42",
+  "email": "maik.teichert@biotherm-hagenow.de",
+  "hours": "Mo–Fr 7:00–16:00",
+  "lat": 53.5659735,
+  "lng": 13.2960286
+},
+{
+  "id": "Nehlsen|Rohstoffwerk Weser (RWW)",
+  "company": "Nehlsen",
+  "name": "Rohstoffwerk Weser (RWW)",
+  "address": "Kap-Horn-Straße 30, 28237 Bremen",
+  "phone": "",
+  "email": "rohstoffwerk-weser@nehlsen.com",
+  "hours": "",
+  "lat": 53.1180842,
+  "lng": 8.7341914
+}
 ]
