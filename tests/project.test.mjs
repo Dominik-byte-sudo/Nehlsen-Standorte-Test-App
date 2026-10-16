@@ -15,7 +15,7 @@ const locations = JSON.parse(locationsText);
 
 test("Standorte liegen in einer gemeinsamen, vollständigen Datenquelle", () => {
   assert.equal(Array.isArray(locations), true);
-  assert.equal(locations.length, 43);
+  assert.equal(locations.length, 51);
   assert.equal(new Set(locations.map((item) => item.id)).size, locations.length);
   for (const item of locations) {
     for (const field of ["company", "name", "address", "phone", "email", "hours", "lat", "lng"]) assert.ok(Object.hasOwn(item, field), `${item.id} needs ${field}`);
@@ -270,7 +270,7 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v38"/);
+  assert.match(sw, /const VERSION = "v39"/);
 });
 
 test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {

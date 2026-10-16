@@ -503,5 +503,60 @@
   "hours": "",
   "lat": 53.1180842,
   "lng": 8.7341914
+},
+{
+  "id": "NEHLSEN-CZ, S.R.O.|Standort Ostrava",
+  "company": "NEHLSEN-CZ, S.R.O.",
+  "name": "Standort Ostrava",
+  "address": "28. října 770/6, Moravská Ostrava, 702 00 Ostrava, Tschechien",
+  "phone": "",
+  "email": "stanislav.chladek@nehlsen.com",
+  "hours": "",
+  "lat": 49.8372217,
+  "lng": 18.2950425
+},
+{
+  "id": "Nehlsen-EKO, spol. s.r.o.|Standort Topoľčany",
+  "company": "Nehlsen-EKO, spol. s.r.o.",
+  "name": "Standort Topoľčany",
+  "address": "Pod Kalváriou 2616/32, 955 01 Topoľčany, Slowakei",
+  "phone": "+421 38 5324 751",
+  "email": "info@nehlseneko.sk",
+  "hours": "",
+  "lat": 48.557284,
+  "lng": 18.1517699
+},
+{
+  "id": "Nehlsen Metaal Recycling Nederland B.V.|Standort Groningen",
+  "company": "Nehlsen Metaal Recycling Nederland B.V.",
+  "name": "Standort Groningen",
+  "address": "Gdanskweg 45, 9723 TT Groningen, Niederlande",
+  "phone": "+31 50 5412880",
+  "email": "info.groningen@nehlsen.com",
+  "hours": "",
+  "lat": 53.2067772,
+  "lng": 6.6043903
+},
+{
+  "id": "Przedsiębiorstwo Usług Sanitarnych PUS Sp. z o.o.|Standort Kwidzyn",
+  "company": "Przedsiębiorstwo Usług Sanitarnych PUS Sp. z o.o.",
+  "name": "Standort Kwidzyn",
+  "address": "ul. Wiślana 2, 82-500 Kwidzyn, Polen",
+  "phone": "+48 55 279 34 58",
+  "email": "pmolski@puskwidzyn.pl",
+  "hours": "Mo–Fr 7:00–15:00",
+  "lat": 53.7348144,
+  "lng": 18.9160157
+},
+{
+  "id": "S.C. INDUSTRIAL PROCES PAPER S.R.L.|Standort Hălchiu",
+  "company": "S.C. INDUSTRIAL PROCES PAPER S.R.L.",
+  "name": "Standort Hălchiu",
+  "address": "Str. Bodului, nr. 738 B, 507080 Hălchiu, Brașov, Rumänien",
+  "phone": "",
+  "email": "industrialprocespaper@gmail.com",
+  "hours": "",
+  "lat": 45.7589703,
+  "lng": 25.556499
 }
 ]
