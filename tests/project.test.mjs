@@ -184,8 +184,15 @@ test("Designrad bietet Normal und Liquid Glass als unabhängig gespeicherte Dars
   const applyDesignBody = appSource.match(/function applyDesign\(design: DesignStyle, save = false\): void \{([\s\S]*?)\n\}/)?.[1] ?? "";
   assert.match(applyDesignBody, /window\.requestAnimationFrame\(\(\) => map\.invalidateSize\(\)\)/);
   assert.match(css, /\.theme-dock\s*\{[^}]*z-index:\s*1100/s, "the control pill must stay above an open mobile detail sheet");
+  assert.match(css, /\.view-controls\.menu-open \.theme-dock \.appearance-menu\s*\{[^}]*right:\s*0/s, "the settings popover must stay inside the screen on phones and tablets");
   assert.equal((appSource + compiledApp).includes("liquid-glass"), false);
   assert.equal(sw.includes("js/liquid-glass.js"), false);
+});
+
+test("Einstellungsrad: Designstil ist ein eigenes Untermenü, Speicher-Reset steht im Hauptmenü", () => {
+  assert.match(html, /id="settingsMain"[\s\S]*?id="designMenuToggle"[\s\S]*?id="clearStorage"[\s\S]*?id="designMenu"[\s\S]*?id="designNormal"[\s\S]*?id="designGlass"/);
+  assert.match(html, /<div[^>]*class="settings-panel hidden"[^>]*id="designMenu"/);
+  assert.match(appSource, /startsWith\("de"\)/, "the labels should follow the system language");
 });
 
 test("Liquid Glass umfasst Kopfzeile, mobilen Ansichtswechsel und die gesamte Standortliste", () => {
@@ -270,7 +277,7 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v39"/);
+  assert.match(sw, /const VERSION = "v43"/);
 });
 
 test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {

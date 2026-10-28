@@ -35,6 +35,44 @@ const appearanceToggle = byId<HTMLButtonElement>("appearanceToggle");
 const appearanceMenu = byId<HTMLDivElement>("appearanceMenu");
 const designNormal = byId<HTMLButtonElement>("designNormal");
 const designGlass = byId<HTMLButtonElement>("designGlass");
+const clearStorageButton = byId<HTMLButtonElement>("clearStorage");
+const settingsMain = byId<HTMLDivElement>("settingsMain");
+const designMenu = byId<HTMLDivElement>("designMenu");
+const designMenuToggle = byId<HTMLButtonElement>("designMenuToggle");
+const designBack = byId<HTMLButtonElement>("designBack");
+const designValue = byId<HTMLElement>("designValue");
+
+type UiLanguage = "de" | "en";
+const uiStrings: Record<UiLanguage, Record<string, string>> = {
+  de: {
+    settingsTitle: "Einstellungen",
+    designStyle: "Designstil",
+    clearStorage: "Lokalen Speicher leeren",
+    clearStorageTitle: "Gespeicherte Einstellungen und Zwischenspeicher löschen und neu laden",
+    back: "Zurück",
+  },
+  en: {
+    settingsTitle: "Settings",
+    designStyle: "Design style",
+    clearStorage: "Clear Local Storage",
+    clearStorageTitle: "Clear saved settings and cache, then reload",
+    back: "Back",
+  },
+};
+
+function detectUiLanguage(): UiLanguage {
+  const systemLanguage = navigator.languages?.[0] ?? navigator.language ?? "";
+  return systemLanguage.toLowerCase().startsWith("de") ? "de" : "en";
+}
+
+const uiLanguage = detectUiLanguage();
+const uiText = uiStrings[uiLanguage];
+for (const element of document.querySelectorAll<HTMLElement>("[data-i18n], [data-i18n-title], [data-i18n-aria-label]")) {
+  const { i18n, i18nTitle, i18nAriaLabel } = element.dataset;
+  if (i18n) element.textContent = uiText[i18n];
+  if (i18nTitle) element.title = uiText[i18nTitle];
+  if (i18nAriaLabel) element.setAttribute("aria-label", uiText[i18nAriaLabel]);
+}
 
 const map = L.map(mapElement, { zoomControl: false }).setView([52.9, 10.5], 6);
 L.control.zoom({ position: "bottomright", zoomInTitle: "Vergrößern", zoomOutTitle: "Verkleinern" }).addTo(map);
@@ -117,9 +155,16 @@ function preferredDesign(): DesignStyle {
   return "normal";
 }
 
+function showSettingsPanel(panel: "main" | "design"): void {
+  settingsMain.classList.toggle("hidden", panel !== "main");
+  designMenu.classList.toggle("hidden", panel !== "design");
+  designMenuToggle.setAttribute("aria-expanded", String(panel === "design"));
+}
+
 function closeAppearanceMenu(): void {
   appearanceMenu.classList.add("hidden");
   appearanceToggle.setAttribute("aria-expanded", "false");
+  showSettingsPanel("main");
 }
 
 function setMobileMenu(open: boolean): void {
@@ -143,6 +188,7 @@ function applyDesign(design: DesignStyle, save = false): void {
   document.documentElement.dataset.design = design;
   designNormal.setAttribute("aria-pressed", String(design === "normal"));
   designGlass.setAttribute("aria-pressed", String(design === "glass"));
+  designValue.textContent = design === "glass" ? "Liquid Glass" : "Normal";
   window.requestAnimationFrame(() => map.invalidateSize());
   if (save) {
     try {
@@ -156,9 +202,12 @@ function applyDesign(design: DesignStyle, save = false): void {
 applyDesign(preferredDesign());
 appearanceToggle.addEventListener("click", () => {
   const open = appearanceToggle.getAttribute("aria-expanded") !== "true";
+  if (open) showSettingsPanel("main");
   appearanceMenu.classList.toggle("hidden", !open);
   appearanceToggle.setAttribute("aria-expanded", String(open));
 });
+designMenuToggle.addEventListener("click", () => showSettingsPanel("design"));
+designBack.addEventListener("click", () => showSettingsPanel("main"));
 designNormal.addEventListener("click", () => {
   applyDesign("normal", true);
   closeAppearanceMenu();
@@ -168,6 +217,40 @@ designGlass.addEventListener("click", () => {
   applyDesign("glass", true);
   closeAppearanceMenu();
   closeMobileMenu();
+});
+
+let clearingData = false;
+
+async function clearLocalDataAndReload(): Promise<void> {
+  clearingData = true;
+  clearStorageButton.disabled = true;
+  try {
+    localStorage.clear();
+  } catch {
+    // Gesperrter Speicher: Zwischenspeicher trotzdem leeren und neu laden.
+  }
+  try {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+    // Wie Strg+F5: Seite und alle eigenen Dateien mit cache "reload" frisch laden, damit auch der HTTP-Cache erneuert wird.
+    const ownUrls = performance.getEntriesByType("resource")
+      .map((entry) => entry.name)
+      .filter((url) => new URL(url).origin === window.location.origin);
+    await Promise.all([window.location.href, ...ownUrls].map((url) => fetch(url, { cache: "reload" }).catch(() => undefined)));
+  } catch {
+    // Ohne Zugriff auf Caches wird trotzdem neu geladen.
+  }
+  window.location.reload();
+}
+
+clearStorageButton.addEventListener("click", () => {
+  void clearLocalDataAndReload();
 });
 listToggle.addEventListener("click", () => {
   const expanded = listToggle.getAttribute("aria-expanded") !== "false";
@@ -508,7 +591,7 @@ if ("serviceWorker" in navigator) {
   if (navigator.serviceWorker.controller) {
     let reloading = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (reloading) return;
+      if (reloading || clearingData) return;
       reloading = true;
       window.location.reload();
     });

@@ -18,4 +18,6 @@ Nach Änderungen an `src/` oder an den lokalen Kartenskripten `npm run build` au
 
 Die Oberfläche, Standortdaten und Bibliotheken werden beim Installieren des Service Workers vorgeladen. Kartenkacheln von OpenStreetMap werden über `https://tile.openstreetmap.org` nur beim normalen Benutzen der Karte nachgeladen und begrenzt lokal zwischengespeichert; die vollständige Karte steht offline daher nicht garantiert zur Verfügung. OSM-Kacheln benötigen weiterhin eine Netzwerkverbindung und müssen gemäß der OpenStreetMap-Kachelrichtlinie verwendet werden.
 
+Über das Einstellungsrad lässt sich mit „Lokalen Speicher leeren“ (bei englischer Systemsprache „Clear Local Storage“) der lokale Speicher (inklusive gespeichertem Hell/Dunkel- und Designstil) sowie alle Caches des Service Workers leeren; danach lädt die Seite wie bei Strg+F5 komplett neu. Die Beschriftungen des Einstellungsrads folgen der Systemsprache: Deutsch, sonst Englisch.
+
 Koordinaten und Öffnungszeiten vor einem produktiven Einsatz fachlich prüfen. Die Anwendung enthält keine Anmeldung oder Zugriffskontrolle; eine interne Bezeichnung ersetzt keine geschützte Bereitstellung.

@@ -402,7 +402,7 @@ html[data-theme="dark"] .marker-cluster-large { background: color-mix(in srgb, v
   bottom: calc(100% + 10px);
   left: 0;
   display: grid;
-  min-width: 210px;
+  min-width: 240px;
   gap: 5px;
   padding: 10px;
   border: 1px solid var(--line);
@@ -425,6 +425,10 @@ html[data-theme="dark"] .marker-cluster-large { background: color-mix(in srgb, v
 }
 .design-option:hover { background: var(--surface-soft); }
 .design-option[aria-pressed="true"] { border-color: var(--line); color: var(--accent-green); background: var(--soft-green); }
+.menu-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.menu-row svg { flex: none; width: 16px; height: 16px; }
+.row-value { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600; }
+.settings-panel { display: grid; gap: 5px; }
 html[data-design="glass"] {
   --glass-surface: var(--surface);
   --glass-sheet-surface: var(--glass-surface);
@@ -783,6 +787,12 @@ html[data-design="glass"] .row > span:first-child {
     border-radius: 16px;
   }
   .view-controls.menu-open .theme-dock { display: flex; }
+  .view-controls.menu-open .theme-dock .appearance-menu {
+    top: calc(100% + 8px);
+    right: 0;
+    bottom: auto;
+    left: auto;
+  }
   html[data-design="glass"] .view-controls .tabs {
     border-color: var(--glass-border);
     background: var(--glass-surface);
@@ -803,11 +813,6 @@ html[data-design="glass"] .row > span:first-child {
     color: #d1f0af;
     background: rgb(255 255 255 / 12%);
   }
-  html[data-design="glass"] .view-controls.menu-open .theme-dock .appearance-menu {
-    top: calc(100% + 8px);
-    right: 0;
-    bottom: auto;
-    left: auto;
   }
 }
 

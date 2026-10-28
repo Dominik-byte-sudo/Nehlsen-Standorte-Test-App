@@ -30,8 +30,10 @@ class ElementMock {
   get isConnected() { return true; }
   getBoundingClientRect() { return { top: 100, left: 100, right: 900, bottom: 700 }; }
 }
-const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "designNormal", "designGlass"];
+const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "settingsMain", "designMenuToggle", "designValue", "designMenu", "designBack", "designNormal", "designGlass", "clearStorage"];
 const els = Object.fromEntries(ids.map((id) => [id, new ElementMock(id)]));
+els.clearStorage.dataset = { i18n: "clearStorage", i18nTitle: "clearStorageTitle" };
+els.designMenu.classList.add("hidden");
 els.workspace.classList = new Classes();
 els.appearanceMenu.classList.add("hidden");
 els.listToggle.setAttribute("aria-expanded", "true");
@@ -48,12 +50,14 @@ globalThis.document = {
   documentElement: { dataset: {} },
   getElementById(id) { return els[id] ?? null; },
   querySelector(selector) { return selector === ".tabs" ? tabs : null; },
+  querySelectorAll() { return Object.values(els).filter((element) => element.dataset.i18n); },
   addEventListener(type, fn) { (docListeners[type] ??= []).push(fn); },
 };
 const storage = new Map();
 globalThis.localStorage = {
   getItem(key) { return storage.get(key) ?? null; },
   setItem(key, value) { storage.set(key, String(value)); },
+  clear() { storage.clear(); },
 };
 const mapEvents = {};
 const mapMock = {
@@ -89,12 +93,14 @@ globalThis.window = {
   requestAnimationFrame(fn) { fn(); },
   setTimeout, clearTimeout,
   addEventListener() {},
+  location: { href: "http://localhost/", origin: "http://localhost", reload() { globalThis.pageReloads = (globalThis.pageReloads ?? 0) + 1; } },
 };
 const locations = [
   { id: "one", company: "Nehlsen", name: "Standort Eins", address: "Straße 1, Bremen", phone: "1", email: "one@example.com", hours: "Mo-Fr", lat: 53.1, lng: 8.7 },
   { id: "two", company: "Nehlsen", name: "Standort Zwei", address: "Straße 2, Bremen", phone: "2", email: "two@example.com", hours: "Mo-Fr", lat: 53.2, lng: 8.8 },
 ];
 globalThis.fetch = async () => ({ ok: true, json: async () => locations });
+Object.defineProperty(globalThis, "navigator", { value: { language: "en-US", languages: ["en-US"] }, configurable: true });
 
 await import("../js/app.js?interaction-test");
 await new Promise((resolve) => setTimeout(resolve, 0));
@@ -194,6 +200,42 @@ test("Designrad öffnet Auswahl und speichert zwischen normalem und Liquid-Glass
   assert.equal(document.documentElement.dataset.design, "normal");
   assert.equal(localStorage.getItem("nehlsen-design"), "normal");
   assert.equal(els.appearanceMenu.classList.contains("hidden"), true);
+});
+
+test("Clear Local Storage leert den lokalen Speicher und lädt die Seite neu", async () => {
+  localStorage.setItem("nehlsen-theme", "dark");
+  localStorage.setItem("nehlsen-design", "glass");
+  const onClear = els.clearStorage.listeners.click?.[0];
+  assert.equal(typeof onClear, "function", "the settings wheel should offer Clear Local Storage");
+  assert.equal(els.clearStorage.textContent, "Clear Local Storage", "the label should follow the English system language");
+  const reloadsBefore = globalThis.pageReloads ?? 0;
+  onClear();
+  for (let attempt = 0; attempt < 20 && (globalThis.pageReloads ?? 0) === reloadsBefore; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  assert.equal((globalThis.pageReloads ?? 0) - reloadsBefore, 1, "the page should reload exactly once");
+  assert.equal(localStorage.getItem("nehlsen-theme"), null);
+  assert.equal(localStorage.getItem("nehlsen-design"), null);
+});
+
+test("Designstil öffnet als eigenes Untermenü und kehrt über Zurück ins Einstellungsmenü", () => {
+  els.appearanceToggle.listeners.click[0]();
+  assert.equal(els.settingsMain.classList.contains("hidden"), false);
+  assert.equal(els.designMenu.classList.contains("hidden"), true);
+  els.designMenuToggle.listeners.click[0]();
+  assert.equal(els.settingsMain.classList.contains("hidden"), true);
+  assert.equal(els.designMenu.classList.contains("hidden"), false);
+  assert.equal(els.designMenuToggle.getAttribute("aria-expanded"), "true");
+  els.designBack.listeners.click[0]();
+  assert.equal(els.settingsMain.classList.contains("hidden"), false);
+  assert.equal(els.designMenu.classList.contains("hidden"), true);
+  els.designMenuToggle.listeners.click[0]();
+  els.designGlass.listeners.click[0]();
+  assert.equal(els.designValue.textContent, "Liquid Glass");
+  els.appearanceToggle.listeners.click[0]();
+  assert.equal(els.settingsMain.classList.contains("hidden"), false, "reopening the wheel should start at the settings list");
+  assert.equal(els.designMenu.classList.contains("hidden"), true);
+  els.appearanceToggle.listeners.click[0]();
 });
 
 test("Mobiles Einstellungsmenü öffnet als Burger-Pill und schließt mit Escape", () => {

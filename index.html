@@ -55,13 +55,27 @@
           <svg class="theme-icon sun-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l-1.42 1.42m11.3-11.3-1.42-1.42"/></svg>
           <span class="theme-label">Dunkelmodus</span>
         </button>
-        <button class="appearance-toggle" id="appearanceToggle" type="button" aria-label="Designstil auswählen" aria-expanded="false" aria-controls="appearanceMenu" title="Designstil auswählen">
+        <button class="appearance-toggle" id="appearanceToggle" type="button" aria-label="Einstellungen" aria-expanded="false" aria-controls="appearanceMenu" title="Einstellungen" data-i18n-aria-label="settingsTitle" data-i18n-title="settingsTitle">
           <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M9.8 3.4h4.4l.45 2.1a7.2 7.2 0 0 1 1.55.9l2.05-.8 2.2 3.8-1.6 1.35a7.2 7.2 0 0 1 0 1.8l1.6 1.35-2.2 3.8-2.05-.8a7.2 7.2 0 0 1-1.55.9l-.45 2.1H9.8l-.45-2.1a7.2 7.2 0 0 1-1.55-.9l-2.05.8-2.2-3.8 1.6-1.35a7.2 7.2 0 0 1 0-1.8l-1.6-1.35 2.2-3.8 2.05.8a7.2 7.2 0 0 1 1.55-.9l.45-2.1Z"/><circle cx="12" cy="12" r="2.65"/></svg>
         </button>
-        <div class="appearance-menu hidden" id="appearanceMenu" role="group" aria-label="Designstil">
-          <span class="appearance-title">Designstil</span>
-          <button class="design-option" id="designNormal" type="button" aria-pressed="true">Normal</button>
-          <button class="design-option" id="designGlass" type="button" aria-pressed="false">Liquid Glass</button>
+        <div class="appearance-menu hidden" id="appearanceMenu" role="group" aria-label="Einstellungen" data-i18n-aria-label="settingsTitle">
+          <div class="settings-panel" id="settingsMain">
+            <span class="appearance-title" data-i18n="settingsTitle">Einstellungen</span>
+            <button class="design-option menu-row" id="designMenuToggle" type="button" aria-expanded="false" aria-controls="designMenu">
+              <span data-i18n="designStyle">Designstil</span>
+              <span class="row-value" id="designValue">Normal</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+            <button class="design-option menu-row" id="clearStorage" type="button" data-i18n="clearStorage" data-i18n-title="clearStorageTitle" title="Gespeicherte Einstellungen und Zwischenspeicher löschen und neu laden">Lokalen Speicher leeren</button>
+          </div>
+          <div class="settings-panel hidden" id="designMenu" role="group" aria-label="Designstil" data-i18n-aria-label="designStyle">
+            <button class="design-option menu-row" id="designBack" type="button" data-i18n-aria-label="back" aria-label="Zurück">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+              <span data-i18n="designStyle">Designstil</span>
+            </button>
+            <button class="design-option" id="designNormal" type="button" aria-pressed="true">Normal</button>
+            <button class="design-option" id="designGlass" type="button" aria-pressed="false">Liquid Glass</button>
+          </div>
         </div>
       </footer>
     </div>
