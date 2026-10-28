@@ -4,6 +4,22 @@ Interne Karten-App für alle Standorte der Nehlsen-Gruppe. Die App läuft als Pr
 
 Technisch ist die App bewusst schlank gehalten: reines HTML, CSS und TypeScript ohne Framework. Die Kartenbibliotheken Leaflet und MarkerCluster liegen lokal im Projekt, die App ist also nicht von einem CDN abhängig.
 
+## Inhaltsverzeichnis
+
+- [Screenshots](#screenshots)
+- [Funktionen](#funktionen)
+- [Schnellstart](#schnellstart)
+- [Befehle](#befehle)
+- [Projektstruktur](#projektstruktur)
+  - [Module in src/](#module-in-src)
+- [Entwicklung](#entwicklung)
+  - [Quellcode ändern](#quellcode-ändern)
+  - [Standortdaten pflegen](#standortdaten-pflegen)
+  - [Service Worker und Versionierung](#service-worker-und-versionierung)
+  - [Tests](#tests)
+- [Offline-Betrieb und Kartenkacheln](#offline-betrieb-und-kartenkacheln)
+- [Hinweise](#hinweise)
+
 ## Screenshots
 
 ### Desktop
@@ -62,7 +78,7 @@ Danach ist die App unter <http://127.0.0.1:4173/> erreichbar, das Koordinaten-We
 ├── standorte.json             Gemeinsame Standortdaten (App und Werkzeug)
 ├── sw.js                      Service Worker (Offline-Cache, Versionsnummer VERSION)
 ├── manifest.webmanifest       PWA-Manifest für die Installation auf dem Gerät
-├── src/                       TypeScript-Quellen (app.ts, domain.ts, coordinate-tool.ts)
+├── src/                       TypeScript-Quellen (Einstieg app.ts, Module in Unterordnern)
 ├── js/                        Kompiliertes JavaScript (von npm run build erzeugt)
 ├── css/                       Styles für App und Werkzeug
 ├── vendor/                    Leaflet und MarkerCluster (von npm run build kopiert)
@@ -71,6 +87,41 @@ Danach ist die App unter <http://127.0.0.1:4173/> erreichbar, das Koordinaten-We
 ├── tests/                     Automatisierte Tests
 └── docs/screenshots/          Bilder für diese Datei
 ```
+
+### Module in src/
+
+Die App ist nach Aufgaben in Ordner aufgeteilt. `app.ts` ist nur der Einstieg: Er ruft die Init-Funktionen der Module in fester Reihenfolge auf. Jedes Modul exportiert Funktionen statt eigenen Zustand beim Laden zu erzeugen; gemeinsame Daten liegen in `data/app-state.ts`.
+
+| Datei | Aufgabe |
+| --- | --- |
+| `app.ts` | Einstiegspunkt: startet alle Module in der richtigen Reihenfolge |
+| `domain.ts` | Reine Logik ohne DOM: Entfernung, Suche, Datenprüfung, HTML-Escaping |
+| `coordinate-tool.ts` | Koordinaten-Werkzeug (eigenständige Seite, unabhängig von der App) |
+| `core/dom.ts` | `byId`: Pflichtelemente sicher abrufen |
+| `core/storage.ts` | Lokale Einstellungen lesen, speichern und löschen |
+| `core/toast.ts` | Kurze Hinweismeldungen |
+| `core/viewport.ts` | Erkennung Desktop / Smartphone |
+| `i18n/strings.ts` | Texte des Einstellungsrads, Spracherkennung |
+| `settings/settings-menu.ts` | Einstellungsrad, Untermenüs, mobiles Menü |
+| `settings/theme.ts` | Farbmodus Hell, Dunkel oder System |
+| `settings/design.ts` | Designstil Normal oder Liquid Glass |
+| `settings/clear-data.ts` | Lokalen Speicher leeren und neu laden |
+| `map/map-view.ts` | Leaflet-Karte, Kacheln, Marker-Cluster |
+| `map/markers.ts` | Pins erzeugen und in einer Registry ablegen |
+| `map/keep-marker-visible.ts` | Gewählten Pin vom Detailfenster frei halten |
+| `map/user-location.ts` | Schaltfläche „In der Nähe“ und Standort des Nutzers |
+| `detail/sheet.ts` | Detailfenster öffnen, schließen, Fokus verwalten |
+| `detail/sheet-template.ts` | HTML des Detailfensters (mit Icons) |
+| `detail/sheet-gesture.ts` | Auf dem Smartphone nach unten wischen zum Schließen |
+| `list/location-list.ts` | Standortliste, Suche und Trefferzähler |
+| `views/tabs.ts` | Umschalten Karte / Liste, Tastaturbedienung |
+| `views/layout.ts` | Desktop-Standortliste ein- und ausklappen |
+| `views/escape-key.ts` | Escape-Taste schließt Menüs und Detailfenster |
+| `data/app-state.ts` | Gemeinsamer Zustand: Standorte, Nutzerposition, Suchbegriff |
+| `data/locations.ts` | `standorte.json` laden und anzeigen |
+| `pwa/service-worker.ts` | Registrierung des Service Workers |
+
+Im Build entstehen daraus gleichnamige Dateien unter `js/` (z. B. `js/detail/sheet.js`).
 
 ## Entwicklung
 
@@ -92,7 +143,7 @@ Die Standorte stehen in `standorte.json` und werden von App und Koordinaten-Werk
 
 ### Service Worker und Versionierung
 
-Der Service Worker (`sw.js`) speichert die Kern-Dateien der App lokal. Installierte Apps erhalten Änderungen nur, wenn die Versionsnummer `VERSION` in `sw.js` erhöht wird. Das ist nötig, sobald eine Datei aus der Liste `CORE` geändert wurde (z. B. `css/app.css`, `js/app.js`, `index.html`, `standorte.json`).
+Der Service Worker (`sw.js`) speichert die Kern-Dateien der App lokal. Installierte Apps erhalten Änderungen nur, wenn die Versionsnummer `VERSION` in `sw.js` erhöht wird. Das ist nötig, sobald eine Datei aus der Liste `CORE` geändert wurde (z. B. `css/app.css`, `js/app.js`, `index.html`, `standorte.json`). Neue Module unter `js/` müssen zusätzlich in `CORE` eingetragen werden; `tests/project.test.mjs` prüft das.
 
 ### Tests
 
@@ -100,7 +151,7 @@ Der Service Worker (`sw.js`) speichert die Kern-Dateien der App lokal. Installie
 
 - `tests/domain.test.mjs`: Logik für Entfernung, Suche und Datenvalidierung.
 - `tests/interaction.test.mjs`: Bedienabläufe der App (Listen, Detailfenster, Einstellungsrad, Speicher leeren) mit simulierten DOM-Elementen.
-- `tests/project.test.mjs`: Prüft Projektstruktur, Styles, Service Worker und Texte des Quelltexts. Diese Tests vergleichen Quelltext per Regex. Wer CSS-Regeln oder HTML-Attribute umbenennt, muss die passenden Erwartungen dort anpassen.
+- `tests/project.test.mjs`: Prüft Projektstruktur, Styles, Service Worker und Texte des Quelltexts. Diese Tests vergleichen Quelltext per Regex; dafür werden alle Module aus `src/` bzw. `js/` gemeinsam gelesen. Wer CSS-Regeln oder HTML-Attribute umbenennt, muss die passenden Erwartungen dort anpassen.
 
 Zusätzlich gibt es einen Browser-Test für die echte Oberfläche: siehe [scripts/README.md](scripts/README.md).
 

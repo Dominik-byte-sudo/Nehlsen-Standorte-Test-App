@@ -1,5 +1,5 @@
 // Bump the version whenever a cached app asset changes.
-const VERSION = "v44";
+const VERSION = "v45";
 const APP_CACHE = `app-${VERSION}`;
 const TILE_CACHE = `tiles-${VERSION}`;
 const CORE = [
@@ -8,6 +8,29 @@ const CORE = [
   "./css/app.css",
   "./js/app.js",
   "./js/domain.js",
+  "./js/core/dom.js",
+  "./js/core/storage.js",
+  "./js/core/toast.js",
+  "./js/core/viewport.js",
+  "./js/data/app-state.js",
+  "./js/data/locations.js",
+  "./js/detail/sheet.js",
+  "./js/detail/sheet-gesture.js",
+  "./js/detail/sheet-template.js",
+  "./js/i18n/strings.js",
+  "./js/list/location-list.js",
+  "./js/map/keep-marker-visible.js",
+  "./js/map/map-view.js",
+  "./js/map/markers.js",
+  "./js/map/user-location.js",
+  "./js/pwa/service-worker.js",
+  "./js/settings/clear-data.js",
+  "./js/settings/design.js",
+  "./js/settings/settings-menu.js",
+  "./js/settings/theme.js",
+  "./js/views/escape-key.js",
+  "./js/views/layout.js",
+  "./js/views/tabs.js",
   "./standorte.json",
   "./assets/nehlsen-logo.png",
   "./manifest.webmanifest",

@@ -1,12 +1,21 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { inflateSync } from "node:zlib";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 const read = (name) => readFile(new URL(name, root), "utf8");
+// Die App ist auf mehrere Module verteilt; Textprüfungen laufen deshalb über alle Dateien eines Ordners.
+const moduleFiles = async (folder, extension) => {
+  const names = (await readdir(new URL(folder, root), { recursive: true }))
+    .map((name) => name.replaceAll("\\", "/"))
+    .filter((name) => name.endsWith(extension) && name !== `coordinate-tool${extension}`)
+    .sort();
+  return names.map((name) => `${folder}${name}`);
+};
+const readModules = async (folder, extension) => (await Promise.all((await moduleFiles(folder, extension)).map((file) => read(file)))).join("\n");
 const [html, css, sw, appSource, compiledApp, toolHtml, toolCss, toolSource, compiledTool, manifestText, locationsText] = await Promise.all([
-  read("index.html"), read("css/app.css"), read("sw.js"), read("src/app.ts"), read("js/app.js"),
+  read("index.html"), read("css/app.css"), read("sw.js"), readModules("src/", ".ts"), readModules("js/", ".js"),
   read("koordinaten-werkzeug.html"), read("css/tool.css"), read("src/coordinate-tool.ts"), read("js/coordinate-tool.js"),
   read("manifest.webmanifest"), read("standorte.json"),
 ]);
@@ -84,6 +93,13 @@ test("Offline-Kernressourcen werden lokal vorab gecacht", async () => {
   assert.doesNotMatch(html + toolHtml, /https:\/\/(?:unpkg\.com|fonts\.googleapis\.com)/);
 });
 
+test("Alle App-Module stehen im Offline-Cache des Service Workers", async () => {
+  const coreBlock = sw.match(/const CORE\s*=\s*\[([^\]]*)\]/)?.[1] ?? "";
+  for (const file of await moduleFiles("js/", ".js")) {
+    assert.ok(coreBlock.includes(`"./${file}"`), `CORE missing ${file}`);
+  }
+});
+
 test("OpenStreetMap-Attribution ist vollständig und verlinkt", () => {
   assert.ok(appSource.includes("https://www.openstreetmap.org/copyright"));
   assert.ok(appSource.includes("contributors"));
@@ -98,7 +114,7 @@ test("App and coordinate tool use OSM's current HTTPS tile endpoint", () => {
 });
 
 test("Die gebauten Module verwenden nur relative JavaScript-Imports", () => {
-  assert.ok(compiledApp.includes('from "./domain.js"'));
+  assert.match(compiledApp, /from "(?:\.\.?\/)+domain\.js"/);
   assert.doesNotMatch(compiledApp + compiledTool, /from ["'](?:leaflet|leaflet\\.markercluster)["']/);
 });
 
@@ -109,8 +125,9 @@ test("Die App lädt TypeScript-kompilierten JavaScript-Code als ES-Modul", () =>
 test("Der Markenbereich zeigt das Nehlsen-Logo und bietet einen benannten Theme-Schalter", () => {
   assert.match(html, /<img[^>]+src="\.\/assets\/nehlsen-logo\.png"[^>]+alt="Nehlsen"/);
   assert.match(html, /<button[^>]+id="themeToggle"[^>]+aria-label=/);
-  assert.match(appSource, /localStorage\.getItem\("nehlsen-theme"\)/);
-  assert.match(appSource, /localStorage\.setItem\("nehlsen-theme"/);
+  assert.match(appSource, /"nehlsen-theme"/);
+  assert.match(appSource, /readSetting\(THEME_STORAGE_KEY/);
+  assert.match(appSource, /saveSetting\(THEME_STORAGE_KEY/);
 });
 
 test("Hell- und Dunkelmodus definieren gut lesbare Oberflächen und speichern die Auswahl", () => {
@@ -176,8 +193,9 @@ test("Designrad bietet Normal und Liquid Glass als unabhängig gespeicherte Dars
   const designTrigger = html.match(/<button[^>]*id="appearanceToggle"[^>]*>/)?.[0] ?? "";
   assert.doesNotMatch(designTrigger, /aria-haspopup/, "the disclosed controls are a group, not an ARIA menu popup");
   assert.match(html, /id="appearanceMenu"[^>]*role="group"[\s\S]*?id="designNormal"[\s\S]*?id="designGlass"/);
-  assert.match(appSource, /localStorage\.getItem\("nehlsen-design"\)/);
-  assert.match(appSource, /localStorage\.setItem\("nehlsen-design"/);
+  assert.match(appSource, /"nehlsen-design"/);
+  assert.match(appSource, /readSetting\(DESIGN_STORAGE_KEY/);
+  assert.match(appSource, /saveSetting\(DESIGN_STORAGE_KEY/);
   assert.match(css, /html\[data-design="glass"\]/);
   assert.match(css, /backdrop-filter:\s*blur/);
   assert.match(css, /@supports\s*\(backdrop-filter:\s*blur/);
@@ -193,7 +211,7 @@ test("Einstellungsrad: Designstil ist ein eigenes Untermenü, Speicher-Reset ste
   assert.match(html, /id="settingsMain"[\s\S]*?id="designMenuToggle"[\s\S]*?id="clearStorage"[\s\S]*?id="designMenu"[\s\S]*?id="designNormal"[\s\S]*?id="designGlass"/);
   assert.match(html, /<div[^>]*class="settings-panel hidden"[^>]*id="designMenu"/);
   assert.match(appSource, /startsWith\("de"\)/, "the labels should follow the system language");
-  assert.match(appSource, /localStorage\.setItem\("nehlsen-theme", setting\)/);
+  assert.match(appSource, /saveSetting\(THEME_STORAGE_KEY, setting\)/);
   assert.match(appSource, /systemDarkQuery\.addEventListener\("change"/, "System should follow changes of the device setting");
   assert.match(appSource, /navigator\.clipboard\.writeText\(address\)/, "the address copy button should use the clipboard");
   assert.match(html, /id="settingsMain"[\s\S]*?id="themeMenuToggle"[\s\S]*?id="designMenu"[\s\S]*?id="themeMenu"[\s\S]*?id="themeSystem"[\s\S]*?id="themeDark"/);
@@ -234,7 +252,7 @@ test("Inline icons use crisp, consistent SVGs instead of glyph characters", () =
   assert.match(html, /id="appearanceToggle"[\s\S]*?<svg[^>]+viewBox="0 0 24 24"/);
   assert.match(html, /id="mobileMenuToggle"[\s\S]*?<svg[^>]+viewBox="0 0 24 24"/);
   assert.match(html, /id="sClose"[^>]*><svg[^>]+viewBox="0 0 24 24"/);
-  assert.match(appSource, /class="row-icon"/);
+  assert.match(appSource, /"row-icon"/);
   assert.doesNotMatch(appSource, /⌖|☎|✉|◷/);
   assert.match(css, /\.row-icon\s*\{/);
   assert.match(css, /\.row > span:first-child\s*\{[^}]*width:\s*34px[^}]*height:\s*34px[^}]*border-radius:\s*11px/s);
@@ -281,7 +299,7 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v44"/);
+  assert.match(sw, /const VERSION = "v45"/);
 });
 
 test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {
