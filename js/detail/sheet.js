@@ -1,7 +1,8 @@
 import { byId } from "../core/dom.js";
 import { toast } from "../core/toast.js";
 import { isDesktop } from "../core/viewport.js";
-import { appState } from "../data/app-state.js";
+import { appState, toggleFavorite } from "../data/app-state.js";
+import { t, onLanguageChange } from "../i18n/strings.js";
 import { keepMarkerVisible } from "../map/keep-marker-visible.js";
 import { map } from "../map/map-view.js";
 import { renderSheetContent } from "./sheet-template.js";
@@ -11,20 +12,31 @@ const detailBody = byId("sBody");
 const queryInput = byId("q");
 const mapTab = byId("tMap");
 let lastFocusedElement = null;
+let shownLocation = null;
 export const isSheetOpen = () => sheet.classList.contains("open");
 async function copyAddress(address) {
     try {
         await navigator.clipboard.writeText(address);
-        toast("Adresse kopiert.");
+        toast(t("addressCopied"));
     }
     catch {
-        toast("Adresse konnte nicht kopiert werden.");
+        toast(t("addressCopyFailed"));
     }
 }
 // Nicht-modales Detailfenster: Karte, Suche und andere Pins bleiben bedienbar.
 // Ein Klick auf einen anderen Pin tauscht nur den Inhalt aus.
 export function openSheet(location, options = {}) {
+    shownLocation = location;
     detailBody.innerHTML = renderSheetContent(location, appState.origin);
+    detailBody.querySelector(".favorite-toggle")?.addEventListener("click", (event) => {
+        const button = event.currentTarget;
+        const favorite = toggleFavorite(location.id);
+        const label = t(favorite ? "favoriteRemove" : "favoriteAdd");
+        button.setAttribute("aria-pressed", String(favorite));
+        button.setAttribute("aria-label", label);
+        button.title = label;
+        window.dispatchEvent(new Event("favoriteschange"));
+    });
     detailBody.querySelector(".copy-address")?.addEventListener("click", () => {
         void copyAddress(location.address);
     });
@@ -69,4 +81,8 @@ export function initSheet() {
     closeButton.addEventListener("click", closeSheet);
     // Klick auf eine freie Stelle der Karte schließt das Fenster; Ziehen/Zoomen nicht.
     map.on("click", closeSheet);
+    onLanguageChange(() => {
+        if (isSheetOpen() && shownLocation)
+            openSheet(shownLocation);
+    });
 }

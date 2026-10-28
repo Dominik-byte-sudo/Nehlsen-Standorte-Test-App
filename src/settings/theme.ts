@@ -1,6 +1,6 @@
 import { byId } from "../core/dom.js";
 import { readSetting, saveSetting } from "../core/storage.js";
-import { uiText } from "../i18n/strings.js";
+import { onLanguageChange, t } from "../i18n/strings.js";
 import { closeAppearanceMenu, closeMobileMenu, showSettingsPanel } from "./settings-menu.js";
 
 type ColorTheme = "light" | "dark";
@@ -11,11 +11,7 @@ const THEME_SETTINGS: readonly ColorThemeSetting[] = ["light", "dark", "system"]
 const THEME_COLOR = "#6ab023";
 
 const systemDarkQuery = window.matchMedia("(prefers-color-scheme: dark)");
-const colorModeLabel: Record<ColorThemeSetting, string> = {
-  system: uiText.colorSystem,
-  light: uiText.colorLight,
-  dark: uiText.colorDark,
-};
+const colorModeLabel = (setting: ColorThemeSetting): string => t(setting === "system" ? "colorSystem" : setting === "light" ? "colorLight" : "colorDark");
 
 const themeToggle = byId<HTMLButtonElement>("themeToggle");
 const themeColor = byId<HTMLMetaElement>("themeColor");
@@ -36,18 +32,18 @@ function resolveTheme(setting: ColorThemeSetting): ColorTheme {
 function applyTheme(theme: ColorTheme): void {
   document.documentElement.dataset.theme = theme;
   themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
-  const action = theme === "dark" ? "Hellmodus aktivieren" : "Dunkelmodus aktivieren";
+  const action = t(theme === "dark" ? "themeActivateLight" : "themeActivateDark");
   themeToggle.setAttribute("aria-label", action);
   themeToggle.title = action;
   const label = themeToggle.querySelector<HTMLElement>(".theme-label");
-  if (label) label.textContent = theme === "dark" ? "Hell" : "Dunkel";
+  if (label) label.textContent = t(theme === "dark" ? "colorLight" : "themeSwitchDark");
   themeColor.content = THEME_COLOR;
 }
 
 function setThemeSetting(setting: ColorThemeSetting, save = false): void {
   themeSetting = setting;
   applyTheme(resolveTheme(setting));
-  themeValue.textContent = colorModeLabel[setting];
+  themeValue.textContent = colorModeLabel(setting);
   themeSystem.setAttribute("aria-pressed", String(setting === "system"));
   themeLight.setAttribute("aria-pressed", String(setting === "light"));
   themeDark.setAttribute("aria-pressed", String(setting === "dark"));
@@ -62,6 +58,7 @@ function chooseTheme(setting: ColorThemeSetting): void {
 
 export function initTheme(): void {
   setThemeSetting(readSetting(THEME_STORAGE_KEY, THEME_SETTINGS, "system"));
+  onLanguageChange(() => setThemeSetting(themeSetting));
   systemDarkQuery.addEventListener("change", () => {
     if (themeSetting === "system") applyTheme(resolveTheme("system"));
   });

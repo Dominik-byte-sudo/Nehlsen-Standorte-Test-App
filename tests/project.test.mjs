@@ -258,6 +258,22 @@ test("Inline icons use crisp, consistent SVGs instead of glyph characters", () =
   assert.match(css, /\.row > span:first-child\s*\{[^}]*width:\s*34px[^}]*height:\s*34px[^}]*border-radius:\s*11px/s);
 });
 
+test("Das Filter-Dropdown in der Suchleiste ist ein eigenes Glass-Menü und wechselt im aktiven Zustand in den Liquid-Glass-Stil", () => {
+  assert.doesNotMatch(html, /<select/, "the native select cannot take the glass styling");
+  assert.doesNotMatch(html, /favoriteFilter/);
+  assert.match(css, /html\[data-design="glass"\] \.scope-trigger\[data-active="true"\][\s\S]*?backdrop-filter/);
+  assert.match(css, /html\[data-design="glass"\] \.scope-menu\s*\{[^}]*backdrop-filter/s);
+  assert.match(css, /\.app-header:has\(\.scope-menu:not\(\.hidden\)\)\s*\{[^}]*z-index:\s*1200/s);
+});
+
+test("Der Filter ist Teil des Suchfelds und nicht daneben", () => {
+  assert.match(html, /<div class="search">[\s\S]*?<input id="q"[\s\S]*?<div class="scope-filter" id="scopeFilter">[\s\S]*?<\/div>\s*<\/div>\s*<button class="btn near"/);
+});
+
+test("Der Standort-Filter steht im Service-Worker-Cache", () => {
+  assert.ok(sw.includes('"./js/list/scope-filter.js"'));
+});
+
 test("Die Schaltfläche In der Nähe hat in beiden Modi dieselbe Farbe wie die Suche", () => {
   for (const selector of [/\.search input\s*\{([^}]*)\}/, /\.near\s*\{([^}]*)\}/]) {
     const rule = css.match(selector)?.[1] ?? "";
@@ -299,12 +315,28 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v45"/);
+  assert.match(sw, /const VERSION = "v48"/);
 });
 
-test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {
+test("Karten-Zoomsteuerung ist in App und Werkzeug übersetzt", () => {
   for (const source of [appSource, toolSource]) {
-    assert.match(source, /zoomInTitle:\s*"Vergrößern"/);
-    assert.match(source, /zoomOutTitle:\s*"Verkleinern"/);
+    assert.match(source, /zoomInTitle:\s*t\("mapZoomIn"\)/);
+    assert.match(source, /zoomOutTitle:\s*t\("mapZoomOut"\)/);
   }
+  assert.match(appSource, /mapZoomIn: "Vergrößern"/);
+  assert.match(appSource, /mapZoomIn: "Zoom in"/);
+});
+
+test("Die Sprache ist automatisch, kann aber manuell auf Deutsch oder Englisch gestellt werden", () => {
+  assert.match(appSource, /LANGUAGE_SETTINGS: readonly LanguageSetting\[\] = \["auto", "de", "en"\]/);
+  assert.match(appSource, /let languageSetting: LanguageSetting = readStoredSetting\(\)/);
+  assert.match(appSource, /navigator\.languages\?\.\[0\]/);
+  assert.match(html, /id="languageMenuToggle"[\s\S]*?data-i18n="language"/);
+  assert.match(html, /id="languageAuto"[\s\S]*?id="languageDe"[\s\S]*?id="languageEn"/);
+});
+
+test("Die App-Version im Quellcode stimmt mit dem Service-Worker-Cache überein", async () => {
+  const appVersion = (await read("src/pwa/app-version.ts")).match(/APP_VERSION = "(v\d+)"/)?.[1];
+  assert.equal(appVersion, sw.match(/const VERSION = "(v\d+)"/)?.[1]);
+  assert.match(sw, /refresh-app-files/);
 });

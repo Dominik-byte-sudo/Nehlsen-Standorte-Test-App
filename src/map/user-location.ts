@@ -4,6 +4,7 @@ import { isDesktop } from "../core/viewport.js";
 import { distanceKm } from "../domain.js";
 import { appState, filteredLocations } from "../data/app-state.js";
 import { renderLocations } from "../list/location-list.js";
+import { t } from "../i18n/strings.js";
 import { showTab } from "../views/tabs.js";
 import { map } from "./map-view.js";
 
@@ -15,7 +16,7 @@ let userMarker: L.Marker | null = null;
 export function initUserLocation(): void {
   nearButton.addEventListener("click", () => {
     if (!navigator.geolocation) {
-      toast("Standortbestimmung wird nicht unterstützt.");
+      toast(t("geoUnsupported"));
       return;
     }
     nearButton.disabled = true;
@@ -32,11 +33,11 @@ export function initUserLocation(): void {
       const nearest = filteredLocations()[0];
       if (!nearest) return;
       map.fitBounds(L.latLngBounds([[origin.lat, origin.lng], [nearest.lat, nearest.lng]]), { padding: [50, 50] });
-      toast(`Nächster Standort: ${nearest.company} ${nearest.name} (${Math.round(distanceKm(origin, nearest))} km)`);
+      toast(t("nearestLocation", { name: `${nearest.company} ${nearest.name}`, km: Math.round(distanceKm(origin, nearest)) }));
       if (!isDesktop()) showTab("list");
     }, () => {
       nearButton.disabled = false;
-      toast("Standort nicht verfügbar – bitte Freigabe erlauben.");
+      toast(t("geoUnavailable"));
     }, { enableHighAccuracy: true, timeout: 10000 });
   });
 }

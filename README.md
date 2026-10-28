@@ -40,13 +40,14 @@ Technisch ist die App bewusst schlank gehalten: reines HTML, CSS und TypeScript 
 
 - **Karte und Liste:** Alle Standorte auf einer Karte, zusammengefasst zu Clustern beim Herauszoomen. Auf dem Desktop lässt sich die Standortliste links ein- und ausklappen; auf dem Smartphone wechselt man über die Tabs „Karte“ und „Liste“.
 - **Suche:** Filtert nach Ort, PLZ oder Gesellschaft.
+- **Favoriten:** Standorte lassen sich im Detailfenster markieren. Über das Dropdown in der Suchleiste zeigt die Liste wahlweise alle Standorte oder nur die Favoriten. Die Auswahl wird lokal auf dem Gerät gespeichert.
 - **In der Nähe:** Ermittelt den eigenen Standort (nach Freigabe) und sortiert die Standorte nach Entfernung. Der nächste Standort wird angezeigt.
 - **Standortdetails:** Adresse, Telefon, E-Mail und Öffnungszeiten. Das Detailfenster ist nicht modal, die Karte bleibt also bedienbar.
 - **Einstellungsrad:**
   - *Designstil:* Normal oder Liquid Glass (Untermenü).
   - *Lokalen Speicher leeren:* Entfernt gespeicherte Einstellungen und alle Caches des Service Workers und lädt die Seite komplett neu, wie Strg+F5.
 - **Hell- und Dunkelmodus:** Über den Schalter neben dem Einstellungsrad. Die Auswahl wird gespeichert.
-- **Sprache:** Die Beschriftungen des Einstellungsrads folgen der Systemsprache (Deutsch, sonst Englisch).
+- **Sprache:** Standardmäßig folgt die App der Systemsprache (Deutsch, sonst Englisch). Im Einstellungsrad lässt sich unter „Sprache“ manuell Deutsch oder English wählen; die Auswahl wird gespeichert und wirkt sofort, auch im Koordinaten-Werkzeug.
 - **Koordinaten-Werkzeug:** Hilfsseite zum Prüfen und Korrigieren von Koordinaten (`koordinaten-werkzeug.html`).
 
 ## Schnellstart
@@ -101,7 +102,8 @@ Die App ist nach Aufgaben in Ordner aufgeteilt. `app.ts` ist nur der Einstieg: E
 | `core/storage.ts` | Lokale Einstellungen lesen, speichern und löschen |
 | `core/toast.ts` | Kurze Hinweismeldungen |
 | `core/viewport.ts` | Erkennung Desktop / Smartphone |
-| `i18n/strings.ts` | Texte des Einstellungsrads, Spracherkennung |
+| `i18n/strings.ts` | Alle Texte auf Deutsch und Englisch, Spracherkennung und Sprachwechsel |
+| `settings/language.ts` | Untermenü „Sprache“: Automatisch, Deutsch, English |
 | `settings/settings-menu.ts` | Einstellungsrad, Untermenüs, mobiles Menü |
 | `settings/theme.ts` | Farbmodus Hell, Dunkel oder System |
 | `settings/design.ts` | Designstil Normal oder Liquid Glass |
@@ -120,6 +122,7 @@ Die App ist nach Aufgaben in Ordner aufgeteilt. `app.ts` ist nur der Einstieg: E
 | `data/app-state.ts` | Gemeinsamer Zustand: Standorte, Nutzerposition, Suchbegriff |
 | `data/locations.ts` | `standorte.json` laden und anzeigen |
 | `pwa/service-worker.ts` | Registrierung des Service Workers |
+| `pwa/app-version.ts` | Erkennt eine neuere App-Version und lädt die Dateien dann einmal neu (wie Strg+F5) |
 
 Im Build entstehen daraus gleichnamige Dateien unter `js/` (z. B. `js/detail/sheet.js`).
 
@@ -143,13 +146,14 @@ Die Standorte stehen in `standorte.json` und werden von App und Koordinaten-Werk
 
 ### Service Worker und Versionierung
 
-Der Service Worker (`sw.js`) speichert die Kern-Dateien der App lokal. Installierte Apps erhalten Änderungen nur, wenn die Versionsnummer `VERSION` in `sw.js` erhöht wird. Das ist nötig, sobald eine Datei aus der Liste `CORE` geändert wurde (z. B. `css/app.css`, `js/app.js`, `index.html`, `standorte.json`). Neue Module unter `js/` müssen zusätzlich in `CORE` eingetragen werden; `tests/project.test.mjs` prüft das.
+Der Service Worker (`sw.js`) speichert die Kern-Dateien der App lokal. Installierte Apps erhalten Änderungen nur, wenn die Versionsnummer `VERSION` in `sw.js` erhöht wird. Das ist nötig, sobald eine Datei aus der Liste `CORE` geändert wurde (z. B. `css/app.css`, `js/app.js`, `index.html`, `standorte.json`). Neue Module unter `js/` müssen zusätzlich in `CORE` eingetragen werden; `tests/project.test.mjs` prüft das. Die Versionsnummer `VERSION` in `sw.js` muss zu `APP_VERSION` in `src/pwa/app-version.ts` passen (ebenfalls geprüft). Ist die im Browser gespeicherte Version älter als die laufende, lädt die App die Dateien einmal neu, wie Strg+F5. Die Einstellungen im lokalen Speicher bleiben dabei erhalten.
 
 ### Tests
 
-`npm test` führt drei Testdateien aus:
+`npm test` führt vier Testdateien aus:
 
 - `tests/domain.test.mjs`: Logik für Entfernung, Suche und Datenvalidierung.
+- `tests/app-version.test.mjs`: Automatische Aktualisierung bei neuerer App-Version (ohne, älter, gleich, offline).
 - `tests/interaction.test.mjs`: Bedienabläufe der App (Listen, Detailfenster, Einstellungsrad, Speicher leeren) mit simulierten DOM-Elementen.
 - `tests/project.test.mjs`: Prüft Projektstruktur, Styles, Service Worker und Texte des Quelltexts. Diese Tests vergleichen Quelltext per Regex; dafür werden alle Module aus `src/` bzw. `js/` gemeinsam gelesen. Wer CSS-Regeln oder HTML-Attribute umbenennt, muss die passenden Erwartungen dort anpassen.
 

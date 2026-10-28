@@ -30,10 +30,11 @@ class ElementMock {
   get isConnected() { return true; }
   getBoundingClientRect() { return { top: 100, left: 100, right: 900, bottom: 700 }; }
 }
-const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "settingsMain", "designMenuToggle", "designValue", "designMenu", "designBack", "designNormal", "designGlass", "themeMenuToggle", "themeValue", "themeMenu", "themeBack", "themeSystem", "themeLight", "themeDark", "clearStorage"];
+const ids = ["map", "list", "count", "q", "scopeFilter", "scopeToggle", "scopeValue", "scopeMenu", "scopeAll", "scopeFavorites", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "settingsMain", "designMenuToggle", "designValue", "designMenu", "designBack", "designNormal", "designGlass", "themeMenuToggle", "themeValue", "themeMenu", "themeBack", "themeSystem", "themeLight", "themeDark", "languageMenuToggle", "languageValue", "languageMenu", "languageBack", "languageAuto", "languageDe", "languageEn", "clearStorage"];
 const els = Object.fromEntries(ids.map((id) => [id, new ElementMock(id)]));
 els.clearStorage.dataset = { i18n: "clearStorage", i18nTitle: "clearStorageTitle" };
 els.designMenu.classList.add("hidden");
+els.languageMenu.classList.add("hidden");
 els.workspace.classList = new Classes();
 els.appearanceMenu.classList.add("hidden");
 els.listToggle.setAttribute("aria-expanded", "true");
@@ -41,6 +42,7 @@ els.listToggle.setAttribute("aria-label", "Standortliste ausblenden");
 els.sheet.inert = true;
 els.sheet.setAttribute("aria-hidden", "true");
 els.list.classList.add("hidden");
+els.scopeMenu.classList.add("hidden");
 const tabs = new ElementMock("tabs");
 const docListeners = {};
 globalThis.HTMLElement = ElementMock;
@@ -117,11 +119,11 @@ test("Standortliste lässt sich schließen und über die gleiche Schaltfläche w
   els.listToggle.listeners.click[0]();
   assert.equal(els.workspace.classList.contains("list-collapsed"), true);
   assert.equal(els.listToggle.getAttribute("aria-expanded"), "false");
-  assert.equal(els.listToggle.getAttribute("aria-label"), "Standortliste einblenden");
+  assert.equal(els.listToggle.getAttribute("aria-label"), "Show location list");
   els.listToggle.listeners.click[0]();
   assert.equal(els.workspace.classList.contains("list-collapsed"), false);
   assert.equal(els.listToggle.getAttribute("aria-expanded"), "true");
-  assert.equal(els.listToggle.getAttribute("aria-label"), "Standortliste ausblenden");
+  assert.equal(els.listToggle.getAttribute("aria-label"), "Hide location list");
 });
 
 test("Die Karte wird nach Ende der Seitenleisten-Animation erneut gerendert", () => {
@@ -241,7 +243,7 @@ test("Clear Local Storage leert den lokalen Speicher und lädt die Seite neu", a
   localStorage.setItem("nehlsen-design", "glass");
   const onClear = els.clearStorage.listeners.click?.[0];
   assert.equal(typeof onClear, "function", "the settings wheel should offer Clear Local Storage");
-  assert.equal(els.clearStorage.textContent, "Clear Local Storage", "the label should follow the English system language");
+  assert.equal(els.clearStorage.textContent, "Clear local storage", "the label should follow the English system language");
   const reloadsBefore = globalThis.pageReloads ?? 0;
   onClear();
   for (let attempt = 0; attempt < 20 && (globalThis.pageReloads ?? 0) === reloadsBefore; attempt += 1) {
@@ -278,7 +280,7 @@ test("Mobiles Einstellungsmenü öffnet als Burger-Pill und schließt mit Escape
   onToggle();
   assert.equal(els.viewControls.classList.contains("menu-open"), true);
   assert.equal(els.mobileMenuToggle.getAttribute("aria-expanded"), "true");
-  assert.equal(els.mobileMenuToggle.getAttribute("aria-label"), "Einstellungen schließen");
+  assert.equal(els.mobileMenuToggle.getAttribute("aria-label"), "Close settings");
 
   const escape = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
   docListeners.keydown[0](escape);
@@ -287,3 +289,50 @@ test("Mobiles Einstellungsmenü öffnet als Burger-Pill und schließt mit Escape
   assert.equal(els.mobileMenuToggle.getAttribute("aria-expanded"), "false");
   assert.equal(document.activeElement, els.mobileMenuToggle);
 });
+
+test("Das Filter-Dropdown in der Suchleiste wechselt zwischen allen Standorten und Favoriten", () => {
+  assert.equal(els.count.textContent, "2 of 2 locations");
+  els.scopeToggle.listeners.click[0]({ detail: 1 });
+  assert.equal(els.scopeToggle.getAttribute("aria-expanded"), "true");
+  assert.equal(els.scopeMenu.classList.contains("hidden"), false);
+  els.scopeFavorites.listeners.click[0]();
+  assert.equal(els.scopeToggle.dataset.active, "true");
+  assert.equal(els.scopeValue.textContent, "Favorites");
+  assert.equal(els.scopeMenu.classList.contains("hidden"), true, "choosing an option closes the menu");
+  assert.equal(els.count.textContent, "0 of 0 locations");
+  assert.match(els.list.innerHTML, /No favorites found/);
+
+  els.scopeToggle.listeners.click[0]({ detail: 1 });
+  const escape = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+  docListeners.keydown[0](escape);
+  assert.equal(escape.defaultPrevented, true);
+  assert.equal(els.scopeMenu.classList.contains("hidden"), true, "Escape closes the open filter menu");
+  assert.equal(document.activeElement, els.scopeToggle);
+
+  els.scopeToggle.listeners.click[0]({ detail: 1 });
+  els.scopeAll.listeners.click[0]();
+  assert.equal(els.scopeToggle.dataset.active, "false");
+  assert.equal(els.count.textContent, "2 of 2 locations");
+});
+
+test("Sprache lässt sich manuell auf Deutsch stellen, speichern und wieder auf Automatisch zurücksetzen", () => {
+  els.appearanceToggle.listeners.click[0]();
+  els.languageMenuToggle.listeners.click[0]();
+  assert.equal(els.languageMenu.classList.contains("hidden"), false);
+  els.languageDe.listeners.click[0]();
+  assert.equal(localStorage.getItem("nehlsen-language"), "de");
+  assert.equal(document.documentElement.lang, "de");
+  assert.equal(els.languageValue.textContent, "Deutsch");
+  assert.equal(els.count.textContent, "2 von 2 Standorten");
+  assert.equal(els.scopeValue.textContent, "Alle");
+  assert.equal(els.clearStorage.textContent, "Lokalen Speicher leeren");
+  assert.equal(els.appearanceMenu.classList.contains("hidden"), true, "choosing a language closes the settings");
+
+  els.appearanceToggle.listeners.click[0]();
+  els.languageMenuToggle.listeners.click[0]();
+  els.languageAuto.listeners.click[0]();
+  assert.equal(localStorage.getItem("nehlsen-language"), "auto");
+  assert.equal(els.languageValue.textContent, "Automatic");
+  assert.equal(els.count.textContent, "2 of 2 locations");
+});
+

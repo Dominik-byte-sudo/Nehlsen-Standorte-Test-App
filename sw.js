@@ -1,5 +1,5 @@
 // Bump the version whenever a cached app asset changes.
-const VERSION = "v45";
+const VERSION = "v48";
 const APP_CACHE = `app-${VERSION}`;
 const TILE_CACHE = `tiles-${VERSION}`;
 const CORE = [
@@ -19,13 +19,16 @@ const CORE = [
   "./js/detail/sheet-template.js",
   "./js/i18n/strings.js",
   "./js/list/location-list.js",
+  "./js/list/scope-filter.js",
   "./js/map/keep-marker-visible.js",
   "./js/map/map-view.js",
   "./js/map/markers.js",
   "./js/map/user-location.js",
+  "./js/pwa/app-version.js",
   "./js/pwa/service-worker.js",
   "./js/settings/clear-data.js",
   "./js/settings/design.js",
+  "./js/settings/language.js",
   "./js/settings/settings-menu.js",
   "./js/settings/theme.js",
   "./js/views/escape-key.js",
@@ -110,6 +113,16 @@ async function handleSameOrigin(request) {
     return Response.error();
   }
 }
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "refresh-app-files") return;
+  const reply = (ok) => event.ports[0]?.postMessage(ok);
+  event.waitUntil(
+    caches.open(APP_CACHE)
+      .then((cache) => cache.addAll(CORE.map((path) => new Request(path, { cache: "reload" }))))
+      .then(() => reply(true), () => reply(false)),
+  );
+});
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;

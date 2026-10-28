@@ -1,4 +1,5 @@
 import { toast } from "../core/toast.js";
+import { t } from "../i18n/strings.js";
 import { isClearingLocalData } from "../settings/clear-data.js";
 
 export function initServiceWorker(): void {
@@ -12,6 +13,6 @@ export function initServiceWorker(): void {
     });
   }
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => toast("Offline-Speicherung konnte nicht aktiviert werden."));
+    navigator.serviceWorker.register("./sw.js").catch(() => toast(t("offlineFailed")));
   });
 }

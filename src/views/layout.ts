@@ -1,4 +1,5 @@
 import { byId } from "../core/dom.js";
+import { t, onLanguageChange } from "../i18n/strings.js";
 import { map } from "../map/map-view.js";
 
 const workspace = byId<HTMLElement>("workspace");
@@ -12,10 +13,16 @@ export function initLayout(): void {
     workspace.classList.toggle("list-collapsed", !nextExpanded);
     viewControls.classList.toggle("list-collapsed", !nextExpanded);
     listToggle.setAttribute("aria-expanded", String(nextExpanded));
-    const action = nextExpanded ? "Standortliste ausblenden" : "Standortliste einblenden";
+    const action = nextExpanded ? t("listToggleHide") : t("listToggleShow");
     listToggle.setAttribute("aria-label", action);
     listToggle.title = action;
     window.requestAnimationFrame(() => map.invalidateSize());
+  });
+  onLanguageChange(() => {
+    const expanded = listToggle.getAttribute("aria-expanded") !== "false";
+    const action = expanded ? t("listToggleHide") : t("listToggleShow");
+    listToggle.setAttribute("aria-label", action);
+    listToggle.title = action;
   });
   workspace.addEventListener("transitionend", (event: TransitionEvent) => {
     if (event.propertyName !== "grid-template-columns") return;

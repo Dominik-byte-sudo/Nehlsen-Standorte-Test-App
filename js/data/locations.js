@@ -1,13 +1,15 @@
 import { toast } from "../core/toast.js";
 import { validateLocations } from "../domain.js";
 import { countElement, renderLocations } from "../list/location-list.js";
+import { t } from "../i18n/strings.js";
 import { createLocationMarker, locationMarkers } from "../map/markers.js";
 import { appState } from "./app-state.js";
 export async function loadLocations() {
+    countElement.textContent = t("loading");
     try {
         const response = await fetch("./standorte.json", { cache: "no-cache" });
         if (!response.ok)
-            throw new Error(`Standortdaten konnten nicht geladen werden (${response.status}).`);
+            throw new Error(t("dataLoadFailed", { status: response.status }));
         const records = await response.json();
         validateLocations(records);
         appState.locations = records;
@@ -16,7 +18,7 @@ export async function loadLocations() {
         renderLocations();
     }
     catch (error) {
-        countElement.textContent = "Standortdaten nicht verfügbar";
-        toast(error instanceof Error ? error.message : "Standortdaten konnten nicht geladen werden.");
+        countElement.textContent = t("countUnavailable");
+        toast(error instanceof Error ? error.message : t("dataLoadFailedGeneric"));
     }
 }
