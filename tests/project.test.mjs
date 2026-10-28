@@ -193,6 +193,10 @@ test("Einstellungsrad: Designstil ist ein eigenes Untermenü, Speicher-Reset ste
   assert.match(html, /id="settingsMain"[\s\S]*?id="designMenuToggle"[\s\S]*?id="clearStorage"[\s\S]*?id="designMenu"[\s\S]*?id="designNormal"[\s\S]*?id="designGlass"/);
   assert.match(html, /<div[^>]*class="settings-panel hidden"[^>]*id="designMenu"/);
   assert.match(appSource, /startsWith\("de"\)/, "the labels should follow the system language");
+  assert.match(appSource, /localStorage\.setItem\("nehlsen-theme", setting\)/);
+  assert.match(appSource, /systemDarkQuery\.addEventListener\("change"/, "System should follow changes of the device setting");
+  assert.match(appSource, /navigator\.clipboard\.writeText\(address\)/, "the address copy button should use the clipboard");
+  assert.match(html, /id="settingsMain"[\s\S]*?id="themeMenuToggle"[\s\S]*?id="designMenu"[\s\S]*?id="themeMenu"[\s\S]*?id="themeSystem"[\s\S]*?id="themeDark"/);
 });
 
 test("Liquid Glass umfasst Kopfzeile, mobilen Ansichtswechsel und die gesamte Standortliste", () => {
@@ -277,7 +281,7 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v43"/);
+  assert.match(sw, /const VERSION = "v44"/);
 });
 
 test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {

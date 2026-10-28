@@ -66,6 +66,11 @@
               <span class="row-value" id="designValue">Normal</span>
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
             </button>
+            <button class="design-option menu-row" id="themeMenuToggle" type="button" aria-expanded="false" aria-controls="themeMenu">
+              <span data-i18n="colorMode">Farbmodus</span>
+              <span class="row-value" id="themeValue">System</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
             <button class="design-option menu-row" id="clearStorage" type="button" data-i18n="clearStorage" data-i18n-title="clearStorageTitle" title="Gespeicherte Einstellungen und Zwischenspeicher löschen und neu laden">Lokalen Speicher leeren</button>
           </div>
           <div class="settings-panel hidden" id="designMenu" role="group" aria-label="Designstil" data-i18n-aria-label="designStyle">
@@ -75,6 +80,15 @@
             </button>
             <button class="design-option" id="designNormal" type="button" aria-pressed="true">Normal</button>
             <button class="design-option" id="designGlass" type="button" aria-pressed="false">Liquid Glass</button>
+          </div>
+          <div class="settings-panel hidden" id="themeMenu" role="group" aria-label="Farbmodus" data-i18n-aria-label="colorMode">
+            <button class="design-option menu-row" id="themeBack" type="button" data-i18n-aria-label="back" aria-label="Zurück">
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>
+              <span data-i18n="colorMode">Farbmodus</span>
+            </button>
+            <button class="design-option" id="themeSystem" type="button" aria-pressed="true" data-i18n="colorSystem">System</button>
+            <button class="design-option" id="themeLight" type="button" aria-pressed="false" data-i18n="colorLight">Hell</button>
+            <button class="design-option" id="themeDark" type="button" aria-pressed="false" data-i18n="colorDark">Dunkel</button>
           </div>
         </div>
       </footer>

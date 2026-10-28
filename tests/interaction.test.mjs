@@ -30,7 +30,7 @@ class ElementMock {
   get isConnected() { return true; }
   getBoundingClientRect() { return { top: 100, left: 100, right: 900, bottom: 700 }; }
 }
-const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "settingsMain", "designMenuToggle", "designValue", "designMenu", "designBack", "designNormal", "designGlass", "clearStorage"];
+const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "settingsMain", "designMenuToggle", "designValue", "designMenu", "designBack", "designNormal", "designGlass", "themeMenuToggle", "themeValue", "themeMenu", "themeBack", "themeSystem", "themeLight", "themeDark", "clearStorage"];
 const els = Object.fromEntries(ids.map((id) => [id, new ElementMock(id)]));
 els.clearStorage.dataset = { i18n: "clearStorage", i18nTitle: "clearStorageTitle" };
 els.designMenu.classList.add("hidden");
@@ -88,8 +88,15 @@ globalThis.L = {
   markerClusterGroup() { return cluster; },
   latLngBounds(points) { return points; },
 };
+let systemPrefersDark = false;
+const systemThemeListeners = [];
 globalThis.window = {
-  matchMedia() { return { matches: true }; },
+  matchMedia(query) {
+    return {
+      get matches() { return query.includes("prefers-color-scheme") ? systemPrefersDark : true; },
+      addEventListener(type, fn) { if (type === "change") systemThemeListeners.push(fn); },
+    };
+  },
   requestAnimationFrame(fn) { fn(); },
   setTimeout, clearTimeout,
   addEventListener() {},
@@ -200,6 +207,33 @@ test("Designrad öffnet Auswahl und speichert zwischen normalem und Liquid-Glass
   assert.equal(document.documentElement.dataset.design, "normal");
   assert.equal(localStorage.getItem("nehlsen-design"), "normal");
   assert.equal(els.appearanceMenu.classList.contains("hidden"), true);
+});
+
+test("Farbmodus System folgt dem Gerät, Hell und Dunkel bleiben fest gewählt", () => {
+  assert.equal(document.documentElement.dataset.theme, "light", "without a saved choice the device setting (light) applies");
+  assert.equal(els.themeValue.textContent, "System");
+  systemPrefersDark = true;
+  systemThemeListeners.forEach((listener) => listener());
+  assert.equal(document.documentElement.dataset.theme, "dark", "System should follow a change of the device setting");
+
+  els.appearanceToggle.listeners.click[0]();
+  els.themeMenuToggle.listeners.click[0]();
+  els.themeLight.listeners.click[0]();
+  assert.equal(document.documentElement.dataset.theme, "light");
+  assert.equal(localStorage.getItem("nehlsen-theme"), "light");
+  assert.equal(els.themeValue.textContent, "Light");
+  systemPrefersDark = false;
+  systemThemeListeners.forEach((listener) => listener());
+  assert.equal(document.documentElement.dataset.theme, "light", "an explicit choice must ignore the device setting");
+
+  systemPrefersDark = true;
+  els.appearanceToggle.listeners.click[0]();
+  els.themeMenuToggle.listeners.click[0]();
+  els.themeSystem.listeners.click[0]();
+  assert.equal(localStorage.getItem("nehlsen-theme"), "system");
+  assert.equal(document.documentElement.dataset.theme, "dark");
+  assert.equal(els.themeSystem.getAttribute("aria-pressed"), "true");
+  assert.equal(els.themeLight.getAttribute("aria-pressed"), "false");
 });
 
 test("Clear Local Storage leert den lokalen Speicher und lädt die Seite neu", async () => {

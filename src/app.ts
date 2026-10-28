@@ -41,6 +41,13 @@ const designMenu = byId<HTMLDivElement>("designMenu");
 const designMenuToggle = byId<HTMLButtonElement>("designMenuToggle");
 const designBack = byId<HTMLButtonElement>("designBack");
 const designValue = byId<HTMLElement>("designValue");
+const themeMenu = byId<HTMLDivElement>("themeMenu");
+const themeMenuToggle = byId<HTMLButtonElement>("themeMenuToggle");
+const themeBack = byId<HTMLButtonElement>("themeBack");
+const themeValue = byId<HTMLElement>("themeValue");
+const themeSystem = byId<HTMLButtonElement>("themeSystem");
+const themeLight = byId<HTMLButtonElement>("themeLight");
+const themeDark = byId<HTMLButtonElement>("themeDark");
 
 type UiLanguage = "de" | "en";
 const uiStrings: Record<UiLanguage, Record<string, string>> = {
@@ -50,6 +57,10 @@ const uiStrings: Record<UiLanguage, Record<string, string>> = {
     clearStorage: "Lokalen Speicher leeren",
     clearStorageTitle: "Gespeicherte Einstellungen und Zwischenspeicher löschen und neu laden",
     back: "Zurück",
+    colorMode: "Farbmodus",
+    colorSystem: "System",
+    colorLight: "Hell",
+    colorDark: "Dunkel",
   },
   en: {
     settingsTitle: "Settings",
@@ -57,6 +68,10 @@ const uiStrings: Record<UiLanguage, Record<string, string>> = {
     clearStorage: "Clear Local Storage",
     clearStorageTitle: "Clear saved settings and cache, then reload",
     back: "Back",
+    colorMode: "Color mode",
+    colorSystem: "System",
+    colorLight: "Light",
+    colorDark: "Dark",
   },
 };
 
@@ -109,19 +124,32 @@ function toast(message: string): void {
 }
 
 type ColorTheme = "light" | "dark";
+type ColorThemeSetting = ColorTheme | "system";
 type DesignStyle = "normal" | "glass";
 
-function preferredTheme(): ColorTheme {
+const systemDarkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const colorModeLabel: Record<ColorThemeSetting, string> = {
+  system: uiText.colorSystem,
+  light: uiText.colorLight,
+  dark: uiText.colorDark,
+};
+
+function savedThemeSetting(): ColorThemeSetting {
   try {
     const savedTheme = localStorage.getItem("nehlsen-theme");
-    if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
+    if (savedTheme === "light" || savedTheme === "dark" || savedTheme === "system") return savedTheme;
   } catch {
-    // Private-browsing policies may disable local storage; use the system setting.
+    // Private-browsing policies may disable local storage; follow the system setting.
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "system";
 }
 
-function applyTheme(theme: ColorTheme, save = false): void {
+function resolveTheme(setting: ColorThemeSetting): ColorTheme {
+  if (setting === "system") return systemDarkQuery.matches ? "dark" : "light";
+  return setting;
+}
+
+function applyTheme(theme: ColorTheme): void {
   document.documentElement.dataset.theme = theme;
   themeToggle.setAttribute("aria-pressed", String(theme === "dark"));
   const action = theme === "dark" ? "Hellmodus aktivieren" : "Dunkelmodus aktivieren";
@@ -130,18 +158,48 @@ function applyTheme(theme: ColorTheme, save = false): void {
   const label = themeToggle.querySelector<HTMLElement>(".theme-label");
   if (label) label.textContent = theme === "dark" ? "Hell" : "Dunkel";
   themeColor.content = "#6ab023";
+}
+
+function setThemeSetting(setting: ColorThemeSetting, save = false): void {
+  themeSetting = setting;
+  applyTheme(resolveTheme(setting));
+  themeValue.textContent = colorModeLabel[setting];
+  themeSystem.setAttribute("aria-pressed", String(setting === "system"));
+  themeLight.setAttribute("aria-pressed", String(setting === "light"));
+  themeDark.setAttribute("aria-pressed", String(setting === "dark"));
   if (save) {
     try {
-      localStorage.setItem("nehlsen-theme", theme);
+      localStorage.setItem("nehlsen-theme", setting);
     } catch {
       toast("Die Designauswahl kann auf diesem Gerät nicht gespeichert werden.");
     }
   }
 }
 
-applyTheme(preferredTheme());
+let themeSetting = savedThemeSetting();
+setThemeSetting(themeSetting);
+systemDarkQuery.addEventListener("change", () => {
+  if (themeSetting === "system") applyTheme(resolveTheme("system"));
+});
 themeToggle.addEventListener("click", () => {
-  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  setThemeSetting(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+  closeMobileMenu();
+});
+themeMenuToggle.addEventListener("click", () => showSettingsPanel("theme"));
+themeBack.addEventListener("click", () => showSettingsPanel("main"));
+themeSystem.addEventListener("click", () => {
+  setThemeSetting("system", true);
+  closeAppearanceMenu();
+  closeMobileMenu();
+});
+themeLight.addEventListener("click", () => {
+  setThemeSetting("light", true);
+  closeAppearanceMenu();
+  closeMobileMenu();
+});
+themeDark.addEventListener("click", () => {
+  setThemeSetting("dark", true);
+  closeAppearanceMenu();
   closeMobileMenu();
 });
 
@@ -155,10 +213,12 @@ function preferredDesign(): DesignStyle {
   return "normal";
 }
 
-function showSettingsPanel(panel: "main" | "design"): void {
+function showSettingsPanel(panel: "main" | "design" | "theme"): void {
   settingsMain.classList.toggle("hidden", panel !== "main");
   designMenu.classList.toggle("hidden", panel !== "design");
+  themeMenu.classList.toggle("hidden", panel !== "theme");
   designMenuToggle.setAttribute("aria-expanded", String(panel === "design"));
+  themeMenuToggle.setAttribute("aria-expanded", String(panel === "theme"));
 }
 
 function closeAppearanceMenu(): void {
@@ -337,6 +397,15 @@ interface OpenSheetOptions {
   panToMarker?: boolean;
 }
 
+async function copyAddress(address: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(address);
+    toast("Adresse kopiert.");
+  } catch {
+    toast("Adresse konnte nicht kopiert werden.");
+  }
+}
+
 // Nicht-modales Detailfenster: Karte, Suche und andere Pins bleiben bedienbar.
 // Ein Klick auf einen anderen Pin tauscht nur den Inhalt aus.
 function openSheet(location: Location, options: OpenSheetOptions = {}): void {
@@ -344,15 +413,17 @@ function openSheet(location: Location, options: OpenSheetOptions = {}): void {
   const distance = origin ? `<div class="distance-note">ca. ${Math.round(distanceKm(origin, location))} km Luftlinie entfernt</div>` : "";
   byId<HTMLDivElement>("sBody").innerHTML = `<div class="co">${escapeHtml(location.company)}</div>
     <h2 id="sTitle">${escapeHtml(location.name)}</h2>${distance}
-    <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>${escapeHtml(location.address)}</span></div>
-    <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.4 2.8a2 2 0 0 1-.6 1.7L7.5 9.6a16 16 0 0 0 6.9 6.9l1.4-1.4a2 2 0 0 1 1.7-.6l2.8.4a2 2 0 0 1 1.7 2Z"/></svg></span><a href="tel:${location.phone.replace(/[^\d+]/g, "")}">${escapeHtml(location.phone)}</a></div>
+    <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>    <span class="address-text">${escapeHtml(location.address)}</span><button class="copy-address" type="button" aria-label="Adresse kopieren" title="Adresse kopieren"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></div>    <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7l.4 2.8a2 2 0 0 1-.6 1.7L7.5 9.6a16 16 0 0 0 6.9 6.9l1.4-1.4a2 2 0 0 1 1.7-.6l2.8.4a2 2 0 0 1 1.7 2Z"/></svg></span><a href="tel:${location.phone.replace(/[^\d+]/g, "")}">${escapeHtml(location.phone)}</a></div>
     <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><a href="mailto:${escapeHtml(location.email)}">${escapeHtml(location.email)}</a></div>
     <div class="row"><span aria-hidden="true"><svg class="row-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="hours">${escapeHtml(location.hours)}</span></div>
     <div class="actions">
       <a class="btn primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&amp;destination=${destination}">Route starten</a>
       <a class="btn secondary" target="_blank" rel="noopener" href="https://maps.apple.com/?daddr=${destination}" aria-label="Route in Apple Karten">Apple Karten</a>
     </div>`;
-    const detailBody = byId<HTMLDivElement>("sBody");
+  const detailBody = byId<HTMLDivElement>("sBody");
+  detailBody.querySelector<HTMLButtonElement>(".copy-address")?.addEventListener("click", () => {
+    void copyAddress(location.address);
+  });
 
 if (!location.phone) {
   detailBody.querySelector('a[href^="tel:"]')?.closest(".row")?.remove();
