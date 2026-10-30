@@ -1,12 +1,21 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { inflateSync } from "node:zlib";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 const read = (name) => readFile(new URL(name, root), "utf8");
+// Die App ist auf mehrere Module verteilt; Textprüfungen laufen deshalb über alle Dateien eines Ordners.
+const moduleFiles = async (folder, extension) => {
+  const names = (await readdir(new URL(folder, root), { recursive: true }))
+    .map((name) => name.replaceAll("\\", "/"))
+    .filter((name) => name.endsWith(extension) && name !== `coordinate-tool${extension}`)
+    .sort();
+  return names.map((name) => `${folder}${name}`);
+};
+const readModules = async (folder, extension) => (await Promise.all((await moduleFiles(folder, extension)).map((file) => read(file)))).join("\n");
 const [html, css, sw, appSource, compiledApp, toolHtml, toolCss, toolSource, compiledTool, manifestText, locationsText] = await Promise.all([
-  read("index.html"), read("css/app.css"), read("sw.js"), read("src/app.ts"), read("js/app.js"),
+  read("index.html"), read("css/app.css"), read("sw.js"), readModules("src/", ".ts"), readModules("js/", ".js"),
   read("koordinaten-werkzeug.html"), read("css/tool.css"), read("src/coordinate-tool.ts"), read("js/coordinate-tool.js"),
   read("manifest.webmanifest"), read("standorte.json"),
 ]);
@@ -84,6 +93,13 @@ test("Offline-Kernressourcen werden lokal vorab gecacht", async () => {
   assert.doesNotMatch(html + toolHtml, /https:\/\/(?:unpkg\.com|fonts\.googleapis\.com)/);
 });
 
+test("Alle App-Module stehen im Offline-Cache des Service Workers", async () => {
+  const coreBlock = sw.match(/const CORE\s*=\s*\[([^\]]*)\]/)?.[1] ?? "";
+  for (const file of await moduleFiles("js/", ".js")) {
+    assert.ok(coreBlock.includes(`"./${file}"`), `CORE missing ${file}`);
+  }
+});
+
 test("OpenStreetMap-Attribution ist vollständig und verlinkt", () => {
   assert.ok(appSource.includes("https://www.openstreetmap.org/copyright"));
   assert.ok(appSource.includes("contributors"));
@@ -98,7 +114,7 @@ test("App and coordinate tool use OSM's current HTTPS tile endpoint", () => {
 });
 
 test("Die gebauten Module verwenden nur relative JavaScript-Imports", () => {
-  assert.ok(compiledApp.includes('from "./domain.js"'));
+  assert.match(compiledApp, /from "(?:\.\.?\/)+domain\.js"/);
   assert.doesNotMatch(compiledApp + compiledTool, /from ["'](?:leaflet|leaflet\\.markercluster)["']/);
 });
 
@@ -109,8 +125,9 @@ test("Die App lädt TypeScript-kompilierten JavaScript-Code als ES-Modul", () =>
 test("Der Markenbereich zeigt das Nehlsen-Logo und bietet einen benannten Theme-Schalter", () => {
   assert.match(html, /<img[^>]+src="\.\/assets\/nehlsen-logo\.png"[^>]+alt="Nehlsen"/);
   assert.match(html, /<button[^>]+id="themeToggle"[^>]+aria-label=/);
-  assert.match(appSource, /localStorage\.getItem\("nehlsen-theme"\)/);
-  assert.match(appSource, /localStorage\.setItem\("nehlsen-theme"/);
+  assert.match(appSource, /"nehlsen-theme"/);
+  assert.match(appSource, /readSetting\(THEME_STORAGE_KEY/);
+  assert.match(appSource, /saveSetting\(THEME_STORAGE_KEY/);
 });
 
 test("Hell- und Dunkelmodus definieren gut lesbare Oberflächen und speichern die Auswahl", () => {
@@ -176,16 +193,28 @@ test("Designrad bietet Normal und Liquid Glass als unabhängig gespeicherte Dars
   const designTrigger = html.match(/<button[^>]*id="appearanceToggle"[^>]*>/)?.[0] ?? "";
   assert.doesNotMatch(designTrigger, /aria-haspopup/, "the disclosed controls are a group, not an ARIA menu popup");
   assert.match(html, /id="appearanceMenu"[^>]*role="group"[\s\S]*?id="designNormal"[\s\S]*?id="designGlass"/);
-  assert.match(appSource, /localStorage\.getItem\("nehlsen-design"\)/);
-  assert.match(appSource, /localStorage\.setItem\("nehlsen-design"/);
+  assert.match(appSource, /"nehlsen-design"/);
+  assert.match(appSource, /readSetting\(DESIGN_STORAGE_KEY/);
+  assert.match(appSource, /saveSetting\(DESIGN_STORAGE_KEY/);
   assert.match(css, /html\[data-design="glass"\]/);
   assert.match(css, /backdrop-filter:\s*blur/);
   assert.match(css, /@supports\s*\(backdrop-filter:\s*blur/);
   const applyDesignBody = appSource.match(/function applyDesign\(design: DesignStyle, save = false\): void \{([\s\S]*?)\n\}/)?.[1] ?? "";
   assert.match(applyDesignBody, /window\.requestAnimationFrame\(\(\) => map\.invalidateSize\(\)\)/);
   assert.match(css, /\.theme-dock\s*\{[^}]*z-index:\s*1100/s, "the control pill must stay above an open mobile detail sheet");
+  assert.match(css, /\.view-controls\.menu-open \.theme-dock \.appearance-menu\s*\{[^}]*right:\s*0/s, "the settings popover must stay inside the screen on phones and tablets");
   assert.equal((appSource + compiledApp).includes("liquid-glass"), false);
   assert.equal(sw.includes("js/liquid-glass.js"), false);
+});
+
+test("Einstellungsrad: Designstil ist ein eigenes Untermenü, Speicher-Reset steht im Hauptmenü", () => {
+  assert.match(html, /id="settingsMain"[\s\S]*?id="designMenuToggle"[\s\S]*?id="clearStorage"[\s\S]*?id="designMenu"[\s\S]*?id="designNormal"[\s\S]*?id="designGlass"/);
+  assert.match(html, /<div[^>]*class="settings-panel hidden"[^>]*id="designMenu"/);
+  assert.match(appSource, /startsWith\("de"\)/, "the labels should follow the system language");
+  assert.match(appSource, /saveSetting\(THEME_STORAGE_KEY, setting\)/);
+  assert.match(appSource, /systemDarkQuery\.addEventListener\("change"/, "System should follow changes of the device setting");
+  assert.match(appSource, /navigator\.clipboard\.writeText\(address\)/, "the address copy button should use the clipboard");
+  assert.match(html, /id="settingsMain"[\s\S]*?id="themeMenuToggle"[\s\S]*?id="designMenu"[\s\S]*?id="themeMenu"[\s\S]*?id="themeSystem"[\s\S]*?id="themeDark"/);
 });
 
 test("Liquid Glass umfasst Kopfzeile, mobilen Ansichtswechsel und die gesamte Standortliste", () => {
@@ -223,10 +252,26 @@ test("Inline icons use crisp, consistent SVGs instead of glyph characters", () =
   assert.match(html, /id="appearanceToggle"[\s\S]*?<svg[^>]+viewBox="0 0 24 24"/);
   assert.match(html, /id="mobileMenuToggle"[\s\S]*?<svg[^>]+viewBox="0 0 24 24"/);
   assert.match(html, /id="sClose"[^>]*><svg[^>]+viewBox="0 0 24 24"/);
-  assert.match(appSource, /class="row-icon"/);
+  assert.match(appSource, /"row-icon"/);
   assert.doesNotMatch(appSource, /⌖|☎|✉|◷/);
   assert.match(css, /\.row-icon\s*\{/);
   assert.match(css, /\.row > span:first-child\s*\{[^}]*width:\s*34px[^}]*height:\s*34px[^}]*border-radius:\s*11px/s);
+});
+
+test("Das Filter-Dropdown in der Suchleiste ist ein eigenes Glass-Menü und wechselt im aktiven Zustand in den Liquid-Glass-Stil", () => {
+  assert.doesNotMatch(html, /<select/, "the native select cannot take the glass styling");
+  assert.doesNotMatch(html, /favoriteFilter/);
+  assert.match(css, /html\[data-design="glass"\] \.scope-trigger\[data-active="true"\][\s\S]*?backdrop-filter/);
+  assert.match(css, /html\[data-design="glass"\] \.scope-menu\s*\{[^}]*backdrop-filter/s);
+  assert.match(css, /\.app-header:has\(\.scope-menu:not\(\.hidden\)\)\s*\{[^}]*z-index:\s*1200/s);
+});
+
+test("Der Filter ist Teil des Suchfelds und nicht daneben", () => {
+  assert.match(html, /<div class="search">[\s\S]*?<input id="q"[\s\S]*?<div class="scope-filter" id="scopeFilter">[\s\S]*?<\/div>\s*<\/div>\s*<button class="btn near"/);
+});
+
+test("Der Standort-Filter steht im Service-Worker-Cache", () => {
+  assert.ok(sw.includes('"./js/list/scope-filter.js"'));
 });
 
 test("Die Schaltfläche In der Nähe hat in beiden Modi dieselbe Farbe wie die Suche", () => {
@@ -270,12 +315,28 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v39"/);
+  assert.match(sw, /const VERSION = "v50"/);
 });
 
-test("Karten-Zoomsteuerung ist in App und Werkzeug deutsch beschriftet", () => {
+test("Karten-Zoomsteuerung ist in App und Werkzeug übersetzt", () => {
   for (const source of [appSource, toolSource]) {
-    assert.match(source, /zoomInTitle:\s*"Vergrößern"/);
-    assert.match(source, /zoomOutTitle:\s*"Verkleinern"/);
+    assert.match(source, /zoomInTitle:\s*t\("mapZoomIn"\)/);
+    assert.match(source, /zoomOutTitle:\s*t\("mapZoomOut"\)/);
   }
+  assert.match(appSource, /mapZoomIn: "Vergrößern"/);
+  assert.match(appSource, /mapZoomIn: "Zoom in"/);
+});
+
+test("Die Sprache ist automatisch, kann aber manuell auf Deutsch oder Englisch gestellt werden", () => {
+  assert.match(appSource, /LANGUAGE_SETTINGS: readonly LanguageSetting\[\] = \["auto", "de", "en"\]/);
+  assert.match(appSource, /let languageSetting: LanguageSetting = readStoredSetting\(\)/);
+  assert.match(appSource, /navigator\.languages\?\.\[0\]/);
+  assert.match(html, /id="languageMenuToggle"[\s\S]*?data-i18n="language"/);
+  assert.match(html, /id="languageAuto"[\s\S]*?id="languageDe"[\s\S]*?id="languageEn"/);
+});
+
+test("Die App-Version im Quellcode stimmt mit dem Service-Worker-Cache überein", async () => {
+  const appVersion = (await read("src/pwa/app-version.ts")).match(/APP_VERSION = "(v\d+)"/)?.[1];
+  assert.equal(appVersion, sw.match(/const VERSION = "(v\d+)"/)?.[1]);
+  assert.match(sw, /refresh-app-files/);
 });

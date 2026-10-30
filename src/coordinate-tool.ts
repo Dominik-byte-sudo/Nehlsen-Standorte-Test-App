@@ -1,11 +1,18 @@
 /// <reference types="leaflet" />
 declare const L: typeof import("leaflet");
 import type { Location } from "./domain.js";
+import { initLanguage, onLanguageChange, t, type MessageKey } from "./i18n/strings.js";
+
+initLanguage();
 
 type CheckState = "untested" | "found" | "approximate" | "missing" | "error" | "manual";
+interface StateMessage {
+  key: MessageKey;
+  params?: Record<string, string | number>;
+}
 interface ToolLocation extends Location {
   state: CheckState;
-  stateText: string;
+  stateMessage: StateMessage;
   listItem: HTMLButtonElement;
   marker: L.Marker;
 }
@@ -25,7 +32,7 @@ const progressElement = byId<HTMLDivElement>("progress");
 const runButton = byId<HTMLButtonElement>("run-geocode");
 const downloadButton = byId<HTMLButtonElement>("download-data");
 const map = L.map("tool-map", { zoomControl: false }).setView([52.9, 10.5], 6);
-L.control.zoom({ zoomInTitle: "Vergrößern", zoomOutTitle: "Verkleinern" }).addTo(map);
+L.control.zoom({ zoomInTitle: t("mapZoomIn"), zoomOutTitle: t("mapZoomOut") }).addTo(map);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
   referrerPolicy: "strict-origin-when-cross-origin",
@@ -42,15 +49,35 @@ function drawItem(location: ToolLocation): void {
   address.textContent = location.address;
   const state = document.createElement("span");
   state.className = `status ${location.state}`;
-  state.textContent = location.stateText;
+  state.textContent = t(location.stateMessage.key, location.stateMessage.params);
   location.listItem.replaceChildren(title, address, state);
 }
 
-function setState(location: ToolLocation, state: CheckState, message: string): void {
+function setState(location: ToolLocation, state: CheckState, message: StateMessage): void {
   location.state = state;
-  location.stateText = message;
+  location.stateMessage = message;
   drawItem(location);
 }
+
+let progressMessage: StateMessage = { key: "toolProgressLoading" };
+
+function setZoomLabel(selector: string, label: string): void {
+  const button = document.querySelector(selector);
+  button?.setAttribute("title", label);
+  button?.setAttribute("aria-label", label);
+}
+
+function setProgress(message: StateMessage): void {
+  progressMessage = message;
+  progressElement.textContent = t(message.key, message.params);
+}
+
+onLanguageChange(() => {
+  setZoomLabel(".leaflet-control-zoom-in", t("mapZoomIn"));
+  setZoomLabel(".leaflet-control-zoom-out", t("mapZoomOut"));
+  for (const location of records) drawItem(location);
+  setProgress(progressMessage);
+});
 
 async function loadRecords(): Promise<void> {
   try {
@@ -71,7 +98,7 @@ async function loadRecords(): Promise<void> {
       const location: ToolLocation = {
         ...record,
         state: "untested",
-        stateText: "ungeprüft – gespeicherte Koordinate",
+        stateMessage: { key: "toolStateUntested" },
         listItem,
         marker,
       };
@@ -79,17 +106,17 @@ async function loadRecords(): Promise<void> {
         const point = marker.getLatLng();
         location.lat = Number(point.lat.toFixed(6));
         location.lng = Number(point.lng.toFixed(6));
-        setState(location, "manual", "manuell gesetzt");
+        setState(location, "manual", { key: "toolStateManual" });
       });
       listElement.append(listItem);
       drawItem(location);
       return location;
     });
-    progressElement.textContent = `${records.length} Standorte geladen.`;
+    setProgress({ key: "toolLoaded", params: { count: records.length } });
     runButton.disabled = false;
     downloadButton.disabled = false;
   } catch (error) {
-    progressElement.textContent = `Standortdaten konnten nicht geladen werden: ${error instanceof Error ? error.message : "Unbekannter Fehler"}`;
+    setProgress({ key: "toolLoadError", params: { message: error instanceof Error ? error.message : t("toolUnknownError") } });
   }
 }
 
@@ -98,7 +125,7 @@ runButton.addEventListener("click", async () => {
   downloadButton.disabled = true;
   for (let index = 0; index < records.length; index += 1) {
     const location = records[index];
-    progressElement.textContent = `Suche ${index + 1} / ${records.length} …`;
+    setProgress({ key: "toolSearching", params: { index: index + 1, total: records.length } });
     try {
       const url = new URL("https://nominatim.openstreetmap.org/search");
       url.search = new URLSearchParams({
@@ -112,27 +139,27 @@ runButton.addEventListener("click", async () => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const results = await response.json() as GeocodeResult[];
       if (!results.length) {
-        setState(location, "missing", "nicht gefunden – Pin manuell prüfen");
+        setState(location, "missing", { key: "toolStateMissing" });
       } else {
         const result = results[0];
         location.lat = Number(Number(result.lat).toFixed(6));
         location.lng = Number(Number(result.lon).toFixed(6));
         location.marker.setLatLng([location.lat, location.lng]);
         const exact = Boolean(result.address?.house_number);
-        setState(location, exact ? "found" : "approximate", exact ? "gefunden (Hausnummer)" : "nur Straße/Ort – bitte prüfen");
+        setState(location, exact ? "found" : "approximate", { key: exact ? "toolStateFound" : "toolStateApprox" });
       }
     } catch (error) {
-      setState(location, "error", `Fehler bei Abfrage${error instanceof Error ? `: ${error.message}` : ""}`);
+      setState(location, "error", error instanceof Error ? { key: "toolStateErrorDetail", params: { message: error.message } } : { key: "toolStateError" });
     }
     await sleep(1100);
   }
-  progressElement.textContent = "Fertig. Orange/rote Einträge und verschobene Pins prüfen.";
+  setProgress({ key: "toolDone" });
   runButton.disabled = false;
   downloadButton.disabled = false;
 });
 
 downloadButton.addEventListener("click", () => {
-  const exported = records.map(({ listItem: _listItem, marker: _marker, state: _state, stateText: _stateText, ...location }) => location);
+  const exported = records.map(({ listItem: _listItem, marker: _marker, state: _state, stateMessage: _stateMessage, ...location }) => location);
   const blob = new Blob([`${JSON.stringify(exported, null, 2)}\n`], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

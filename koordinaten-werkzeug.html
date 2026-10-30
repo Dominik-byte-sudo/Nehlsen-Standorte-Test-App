@@ -4,25 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#6ab023">
-  <title>Koordinaten-Werkzeug · Nehlsen Standorte</title>
+  <title data-i18n="toolTitle">Koordinaten-Werkzeug · Nehlsen Standorte</title>
   <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="css/tool.css">
 </head>
 <body>
   <div id="tool-shell">
-    <aside aria-label="Koordinaten prüfen">
+    <aside data-i18n-aria-label="toolAsideLabel" aria-label="Koordinaten prüfen">
       <header id="top">
-        <h1>Koordinaten-Werkzeug</h1>
-        <p>Standorte werden direkt aus standorte.json geladen. Nominatim-Abfragen dauern etwa eine Minute. Orange/rote Treffer bitte prüfen; Pins können gezogen werden.</p>
+        <h1 data-i18n="toolHeading">Koordinaten-Werkzeug</h1>
+        <p data-i18n="toolIntro">Standorte werden direkt aus standorte.json geladen. Nominatim-Abfragen dauern etwa eine Minute. Orange/rote Treffer bitte prüfen; Pins können gezogen werden.</p>
         <div class="actions">
-          <button id="run-geocode" type="button" disabled>Koordinaten ermitteln</button>
-          <button id="download-data" type="button" disabled>standorte.json herunterladen</button>
+          <button id="run-geocode" type="button" disabled data-i18n="toolRun">Koordinaten ermitteln</button>
+          <button id="download-data" type="button" disabled data-i18n="toolDownload">standorte.json herunterladen</button>
         </div>
-        <div id="progress" role="status" aria-live="polite">Daten werden geladen …</div>
+        <div id="progress" role="status" aria-live="polite" data-i18n="toolProgressLoading">Daten werden geladen …</div>
       </header>
-      <div id="location-list" aria-label="Standortliste"></div>
+      <div id="location-list" data-i18n-aria-label="toolListLabel" aria-label="Standortliste"></div>
     </aside>
-    <div id="tool-map" role="region" aria-label="Karte zum Prüfen und Verschieben der Koordinaten"></div>
+    <div id="tool-map" role="region" data-i18n-aria-label="toolMapLabel" aria-label="Karte zum Prüfen und Verschieben der Koordinaten"></div>
   </div>
   <script src="vendor/leaflet.js"></script>
   <script type="module" src="./js/coordinate-tool.js"></script>

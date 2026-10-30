@@ -1,0 +1,36 @@
+import { byId } from "../core/dom.js";
+import { readSetting, saveSetting } from "../core/storage.js";
+import { onLanguageChange, t } from "../i18n/strings.js";
+import { map } from "../map/map-view.js";
+import { closeAppearanceMenu, closeMobileMenu, showSettingsPanel } from "./settings-menu.js";
+const DESIGN_STORAGE_KEY = "nehlsen-design";
+const DESIGN_STYLES = ["normal", "glass"];
+const designNormal = byId("designNormal");
+const designGlass = byId("designGlass");
+const designValue = byId("designValue");
+const designMenuToggle = byId("designMenuToggle");
+const designBack = byId("designBack");
+let currentDesign = "normal";
+function applyDesign(design, save = false) {
+    currentDesign = design;
+    document.documentElement.dataset.design = design;
+    designNormal.setAttribute("aria-pressed", String(design === "normal"));
+    designGlass.setAttribute("aria-pressed", String(design === "glass"));
+    designValue.textContent = t(design === "glass" ? "designGlass" : "designNormal");
+    window.requestAnimationFrame(() => map.invalidateSize());
+    if (save)
+        saveSetting(DESIGN_STORAGE_KEY, design);
+}
+function chooseDesign(design) {
+    applyDesign(design, true);
+    closeAppearanceMenu();
+    closeMobileMenu();
+}
+export function initDesign() {
+    applyDesign(readSetting(DESIGN_STORAGE_KEY, DESIGN_STYLES, "normal"));
+    onLanguageChange(() => applyDesign(currentDesign));
+    designMenuToggle.addEventListener("click", () => showSettingsPanel("design", true));
+    designBack.addEventListener("click", () => showSettingsPanel("main", true));
+    designNormal.addEventListener("click", () => chooseDesign("normal"));
+    designGlass.addEventListener("click", () => chooseDesign("glass"));
+}

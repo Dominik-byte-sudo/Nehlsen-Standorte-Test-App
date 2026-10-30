@@ -111,7 +111,7 @@ const folded = await evaluate(`(() => {
   const map=document.querySelector("#map").getBoundingClientRect(), list=document.querySelector("#list"), dock=document.querySelector(".theme-dock").getBoundingClientRect(), toggle=document.querySelector("#listToggle");
   return { expanded:toggle.getAttribute("aria-expanded"), label:toggle.getAttribute("aria-label"), viewportWidth:innerWidth, appWidth:document.querySelector("#app").getBoundingClientRect().width, mainWidth:document.querySelector("#workspace").getBoundingClientRect().width, mainClass:document.querySelector("#workspace").className, mainMatches:document.querySelector("#workspace").matches("main.list-collapsed"), desktopMedia:matchMedia("(min-width: 1024px)").matches, inlineGrid:document.querySelector("#workspace").style.gridTemplateColumns, collapsedRules:[...document.styleSheets].flatMap(sheet=>[...sheet.cssRules]).filter(rule=>rule.cssText.includes("list-collapsed")).map(rule=>rule.cssText), grid:getComputedStyle(document.querySelector("#workspace")).gridTemplateColumns, mapWidth:map.width, listWidth:list.getBoundingClientRect().width, dockWidth:dock.width, dockRight:dock.right, themeButtonRight:document.querySelector("#themeToggle").getBoundingClientRect().right };
 })()`);
-if (folded.expanded !== "false" || folded.label !== "Standortliste einblenden" || folded.mapWidth < desktop.width - 5 || folded.listWidth !== 0 || folded.dockWidth >= desktop.dockWidth || folded.themeButtonRight > folded.dockRight + 1 || folded.dockRight > desktop.width / 2) {
+if (folded.expanded !== "false" || !/Standortliste einblenden|Show location list/.test(folded.label) || folded.mapWidth < desktop.width - 5 || folded.listWidth !== 0 || folded.dockWidth >= desktop.dockWidth || folded.themeButtonRight > folded.dockRight + 1 || folded.dockRight > desktop.width / 2) {
   throw new Error(`Desktop folded-list check failed: ${JSON.stringify(folded)}`);
 }
 await new Promise((resolve) => setTimeout(resolve, 100));
@@ -172,6 +172,7 @@ await pointerClick("#mobileMenuToggle");
 await assert('document.querySelector("#mobileMenuToggle").getAttribute("aria-expanded") === "true" && getComputedStyle(document.querySelector("#themeDock")).display !== "none"', "The mobile settings pill did not open.");
 await pointerClick("#appearanceToggle");
 await assert('document.querySelector("#appearanceToggle").getAttribute("aria-expanded") === "true" && !document.querySelector("#appearanceMenu").classList.contains("hidden")', "The design wheel is covered by the open mobile detail sheet.");
+await pointerClick("#designMenuToggle");
 await pointerClick("#designGlass");
 await assert('document.documentElement.dataset.design === "glass" && localStorage.getItem("nehlsen-design") === "glass" && document.querySelector("#mobileMenuToggle").getAttribute("aria-expanded") === "false"', "Mobile Liquid Glass selection did not apply or close the settings pill.");
 const opticalGlass = await evaluate('({dockZ:getComputedStyle(document.querySelector("#themeDock")).zIndex,sheetFilter:getComputedStyle(document.querySelector("#sheet")).backdropFilter,menuFilter:getComputedStyle(document.querySelector("#appearanceMenu")).backdropFilter})');
@@ -183,6 +184,7 @@ await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: fal
   const fs = await import("node:fs/promises");
   await fs.writeFile("C:/Users/fkaempfe/AppData/Local/hermes/cache/scratch/nehlsen-mobile-glass-menu.png", Buffer.from(data, "base64"));
 });
+await pointerClick("#designMenuToggle");
 await pointerClick("#designNormal");
 await assert('document.documentElement.dataset.design === "normal" && localStorage.getItem("nehlsen-design") === "normal"', "The design wheel could not switch back to Normal on mobile.");
 await key("Escape");

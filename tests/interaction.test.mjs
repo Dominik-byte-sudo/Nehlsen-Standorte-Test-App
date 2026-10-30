@@ -30,8 +30,12 @@ class ElementMock {
   get isConnected() { return true; }
   getBoundingClientRect() { return { top: 100, left: 100, right: 900, bottom: 700 }; }
 }
-const ids = ["map", "list", "count", "q", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "designNormal", "designGlass"];
+const ids = ["map", "list", "count", "q", "scopeFilter", "scopeToggle", "scopeValue", "scopeMenu", "scopeAll", "scopeFavorites", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "settingsMain", "designMenuToggle", "designValue", "designMenu", "designBack", "designNormal", "designGlass", "themeMenuToggle", "themeValue", "themeMenu", "themeBack", "themeSystem", "themeLight", "themeDark", "languageMenuToggle", "languageValue", "languageMenu", "languageBack", "languageAuto", "languageDe", "languageEn", "clearStorage", "clearMenu", "clearKeepFavorites", "clearAllData", "clearCancel"];
 const els = Object.fromEntries(ids.map((id) => [id, new ElementMock(id)]));
+els.clearStorage.dataset = { i18n: "clearStorage", i18nTitle: "clearStorageTitle" };
+els.designMenu.classList.add("hidden");
+els.languageMenu.classList.add("hidden");
+els.clearMenu.classList.add("hidden");
 els.workspace.classList = new Classes();
 els.appearanceMenu.classList.add("hidden");
 els.listToggle.setAttribute("aria-expanded", "true");
@@ -39,6 +43,7 @@ els.listToggle.setAttribute("aria-label", "Standortliste ausblenden");
 els.sheet.inert = true;
 els.sheet.setAttribute("aria-hidden", "true");
 els.list.classList.add("hidden");
+els.scopeMenu.classList.add("hidden");
 const tabs = new ElementMock("tabs");
 const docListeners = {};
 globalThis.HTMLElement = ElementMock;
@@ -48,12 +53,14 @@ globalThis.document = {
   documentElement: { dataset: {} },
   getElementById(id) { return els[id] ?? null; },
   querySelector(selector) { return selector === ".tabs" ? tabs : null; },
+  querySelectorAll() { return Object.values(els).filter((element) => element.dataset.i18n); },
   addEventListener(type, fn) { (docListeners[type] ??= []).push(fn); },
 };
 const storage = new Map();
 globalThis.localStorage = {
   getItem(key) { return storage.get(key) ?? null; },
   setItem(key, value) { storage.set(key, String(value)); },
+  clear() { storage.clear(); },
 };
 const mapEvents = {};
 const mapMock = {
@@ -84,17 +91,26 @@ globalThis.L = {
   markerClusterGroup() { return cluster; },
   latLngBounds(points) { return points; },
 };
+let systemPrefersDark = false;
+const systemThemeListeners = [];
 globalThis.window = {
-  matchMedia() { return { matches: true }; },
+  matchMedia(query) {
+    return {
+      get matches() { return query.includes("prefers-color-scheme") ? systemPrefersDark : true; },
+      addEventListener(type, fn) { if (type === "change") systemThemeListeners.push(fn); },
+    };
+  },
   requestAnimationFrame(fn) { fn(); },
   setTimeout, clearTimeout,
   addEventListener() {},
+  location: { href: "http://localhost/", origin: "http://localhost", reload() { globalThis.pageReloads = (globalThis.pageReloads ?? 0) + 1; } },
 };
 const locations = [
   { id: "one", company: "Nehlsen", name: "Standort Eins", address: "Straße 1, Bremen", phone: "1", email: "one@example.com", hours: "Mo-Fr", lat: 53.1, lng: 8.7 },
   { id: "two", company: "Nehlsen", name: "Standort Zwei", address: "Straße 2, Bremen", phone: "2", email: "two@example.com", hours: "Mo-Fr", lat: 53.2, lng: 8.8 },
 ];
 globalThis.fetch = async () => ({ ok: true, json: async () => locations });
+Object.defineProperty(globalThis, "navigator", { value: { language: "en-US", languages: ["en-US"] }, configurable: true });
 
 await import("../js/app.js?interaction-test");
 await new Promise((resolve) => setTimeout(resolve, 0));
@@ -104,11 +120,11 @@ test("Standortliste lässt sich schließen und über die gleiche Schaltfläche w
   els.listToggle.listeners.click[0]();
   assert.equal(els.workspace.classList.contains("list-collapsed"), true);
   assert.equal(els.listToggle.getAttribute("aria-expanded"), "false");
-  assert.equal(els.listToggle.getAttribute("aria-label"), "Standortliste einblenden");
+  assert.equal(els.listToggle.getAttribute("aria-label"), "Show location list");
   els.listToggle.listeners.click[0]();
   assert.equal(els.workspace.classList.contains("list-collapsed"), false);
   assert.equal(els.listToggle.getAttribute("aria-expanded"), "true");
-  assert.equal(els.listToggle.getAttribute("aria-label"), "Standortliste ausblenden");
+  assert.equal(els.listToggle.getAttribute("aria-label"), "Hide location list");
 });
 
 test("Die Karte wird nach Ende der Seitenleisten-Animation erneut gerendert", () => {
@@ -196,13 +212,80 @@ test("Designrad öffnet Auswahl und speichert zwischen normalem und Liquid-Glass
   assert.equal(els.appearanceMenu.classList.contains("hidden"), true);
 });
 
+test("Farbmodus System folgt dem Gerät, Hell und Dunkel bleiben fest gewählt", () => {
+  assert.equal(document.documentElement.dataset.theme, "light", "without a saved choice the device setting (light) applies");
+  assert.equal(els.themeValue.textContent, "System");
+  systemPrefersDark = true;
+  systemThemeListeners.forEach((listener) => listener());
+  assert.equal(document.documentElement.dataset.theme, "dark", "System should follow a change of the device setting");
+
+  els.appearanceToggle.listeners.click[0]();
+  els.themeMenuToggle.listeners.click[0]();
+  els.themeLight.listeners.click[0]();
+  assert.equal(document.documentElement.dataset.theme, "light");
+  assert.equal(localStorage.getItem("nehlsen-theme"), "light");
+  assert.equal(els.themeValue.textContent, "Light");
+  systemPrefersDark = false;
+  systemThemeListeners.forEach((listener) => listener());
+  assert.equal(document.documentElement.dataset.theme, "light", "an explicit choice must ignore the device setting");
+
+  systemPrefersDark = true;
+  els.appearanceToggle.listeners.click[0]();
+  els.themeMenuToggle.listeners.click[0]();
+  els.themeSystem.listeners.click[0]();
+  assert.equal(localStorage.getItem("nehlsen-theme"), "system");
+  assert.equal(document.documentElement.dataset.theme, "dark");
+  assert.equal(els.themeSystem.getAttribute("aria-pressed"), "true");
+  assert.equal(els.themeLight.getAttribute("aria-pressed"), "false");
+});
+
+test("Clear Local Storage leert den lokalen Speicher und lädt die Seite neu", async () => {
+  localStorage.setItem("nehlsen-theme", "dark");
+  localStorage.setItem("nehlsen-design", "glass");
+  const onClear = els.clearStorage.listeners.click?.[0];
+  assert.equal(typeof onClear, "function", "the settings wheel should offer Clear Local Storage");
+  assert.equal(els.clearStorage.textContent, "Clear local storage", "the label should follow the English system language");
+  const reloadsBefore = globalThis.pageReloads ?? 0;
+  onClear();
+  assert.equal(els.clearMenu.classList.contains("hidden"), false, "the clear button should first ask what to delete");
+  localStorage.setItem("nehlsen-favorites", JSON.stringify(["one"]));
+  els.clearKeepFavorites.listeners.click[0]();
+  for (let attempt = 0; attempt < 20 && (globalThis.pageReloads ?? 0) === reloadsBefore; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  assert.equal((globalThis.pageReloads ?? 0) - reloadsBefore, 1, "the page should reload exactly once");
+  assert.equal(localStorage.getItem("nehlsen-theme"), null);
+  assert.equal(localStorage.getItem("nehlsen-design"), null);
+  assert.equal(localStorage.getItem("nehlsen-favorites"), JSON.stringify(["one"]), "favorites survive when only settings are deleted");
+});
+
+test("Designstil öffnet als eigenes Untermenü und kehrt über Zurück ins Einstellungsmenü", () => {
+  els.appearanceToggle.listeners.click[0]();
+  assert.equal(els.settingsMain.classList.contains("hidden"), false);
+  assert.equal(els.designMenu.classList.contains("hidden"), true);
+  els.designMenuToggle.listeners.click[0]();
+  assert.equal(els.settingsMain.classList.contains("hidden"), true);
+  assert.equal(els.designMenu.classList.contains("hidden"), false);
+  assert.equal(els.designMenuToggle.getAttribute("aria-expanded"), "true");
+  els.designBack.listeners.click[0]();
+  assert.equal(els.settingsMain.classList.contains("hidden"), false);
+  assert.equal(els.designMenu.classList.contains("hidden"), true);
+  els.designMenuToggle.listeners.click[0]();
+  els.designGlass.listeners.click[0]();
+  assert.equal(els.designValue.textContent, "Liquid Glass");
+  els.appearanceToggle.listeners.click[0]();
+  assert.equal(els.settingsMain.classList.contains("hidden"), false, "reopening the wheel should start at the settings list");
+  assert.equal(els.designMenu.classList.contains("hidden"), true);
+  els.appearanceToggle.listeners.click[0]();
+});
+
 test("Mobiles Einstellungsmenü öffnet als Burger-Pill und schließt mit Escape", () => {
   const onToggle = els.mobileMenuToggle.listeners.click?.[0];
   assert.equal(typeof onToggle, "function", "the mobile settings pill should toggle its controls");
   onToggle();
   assert.equal(els.viewControls.classList.contains("menu-open"), true);
   assert.equal(els.mobileMenuToggle.getAttribute("aria-expanded"), "true");
-  assert.equal(els.mobileMenuToggle.getAttribute("aria-label"), "Einstellungen schließen");
+  assert.equal(els.mobileMenuToggle.getAttribute("aria-label"), "Close settings");
 
   const escape = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
   docListeners.keydown[0](escape);
@@ -211,3 +294,69 @@ test("Mobiles Einstellungsmenü öffnet als Burger-Pill und schließt mit Escape
   assert.equal(els.mobileMenuToggle.getAttribute("aria-expanded"), "false");
   assert.equal(document.activeElement, els.mobileMenuToggle);
 });
+
+test("Das Filter-Dropdown in der Suchleiste wechselt zwischen allen Standorten und Favoriten", () => {
+  assert.equal(els.count.textContent, "2 of 2 locations");
+  els.scopeToggle.listeners.click[0]({ detail: 1 });
+  assert.equal(els.scopeToggle.getAttribute("aria-expanded"), "true");
+  assert.equal(els.scopeMenu.classList.contains("hidden"), false);
+  els.scopeFavorites.listeners.click[0]();
+  assert.equal(els.scopeToggle.dataset.active, "true");
+  assert.equal(els.scopeValue.textContent, "Favorites");
+  assert.equal(els.scopeMenu.classList.contains("hidden"), true, "choosing an option closes the menu");
+  assert.equal(els.count.textContent, "0 of 0 locations");
+  assert.match(els.list.innerHTML, /No favorites found/);
+
+  els.scopeToggle.listeners.click[0]({ detail: 1 });
+  const escape = new KeyboardEvent("keydown", { key: "Escape", cancelable: true });
+  docListeners.keydown[0](escape);
+  assert.equal(escape.defaultPrevented, true);
+  assert.equal(els.scopeMenu.classList.contains("hidden"), true, "Escape closes the open filter menu");
+  assert.equal(document.activeElement, els.scopeToggle);
+
+  els.scopeToggle.listeners.click[0]({ detail: 1 });
+  els.scopeAll.listeners.click[0]();
+  assert.equal(els.scopeToggle.dataset.active, "false");
+  assert.equal(els.count.textContent, "2 of 2 locations");
+});
+
+test("Sprache lässt sich manuell auf Deutsch stellen, speichern und wieder auf Automatisch zurücksetzen", () => {
+  els.appearanceToggle.listeners.click[0]();
+  els.languageMenuToggle.listeners.click[0]();
+  assert.equal(els.languageMenu.classList.contains("hidden"), false);
+  els.languageDe.listeners.click[0]();
+  assert.equal(localStorage.getItem("nehlsen-language"), "de");
+  assert.equal(document.documentElement.lang, "de");
+  assert.equal(els.languageValue.textContent, "Deutsch");
+  assert.equal(els.count.textContent, "2 von 2 Standorten");
+  assert.equal(els.scopeValue.textContent, "Alle");
+  assert.equal(els.clearStorage.textContent, "Lokalen Speicher leeren");
+  assert.equal(els.appearanceMenu.classList.contains("hidden"), true, "choosing a language closes the settings");
+
+  els.appearanceToggle.listeners.click[0]();
+  els.languageMenuToggle.listeners.click[0]();
+  els.languageAuto.listeners.click[0]();
+  assert.equal(localStorage.getItem("nehlsen-language"), "auto");
+  assert.equal(els.languageValue.textContent, "Automatic");
+  assert.equal(els.count.textContent, "2 of 2 locations");
+});
+
+test("Lokalen Speicher leeren: Abbrechen lässt alles unverändert, Einstellungen und Favoriten löschen entfernt beides", async () => {
+  localStorage.setItem("nehlsen-theme", "light");
+  localStorage.setItem("nehlsen-favorites", JSON.stringify(["two"]));
+  els.clearStorage.listeners.click[0]();
+  els.clearCancel.listeners.click[0]();
+  assert.equal(els.clearMenu.classList.contains("hidden"), true, "cancel returns to the settings list");
+  assert.equal(localStorage.getItem("nehlsen-theme"), "light");
+
+  const reloadsBefore = globalThis.pageReloads ?? 0;
+  els.clearStorage.listeners.click[0]();
+  els.clearAllData.listeners.click[0]();
+  for (let attempt = 0; attempt < 20 && (globalThis.pageReloads ?? 0) === reloadsBefore; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  assert.equal((globalThis.pageReloads ?? 0) - reloadsBefore, 1);
+  assert.equal(localStorage.getItem("nehlsen-theme"), null);
+  assert.equal(localStorage.getItem("nehlsen-favorites"), null, "deleting everything also removes the favorites");
+});
+
