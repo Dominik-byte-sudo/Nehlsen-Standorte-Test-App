@@ -1,5 +1,5 @@
 // Muss mit VERSION in sw.js übereinstimmen; tests/project.test.mjs prüft das.
-export const APP_VERSION = "v48";
+export const APP_VERSION = "v50";
 
 const APP_VERSION_STORAGE_KEY = "nehlsen-app-version";
 const REFRESH_TIMEOUT_MS = 15000;
@@ -14,13 +14,18 @@ function storedVersion(): string | null {
   }
 }
 
-function rememberVersion(): void {
+function rememberVersion(): boolean {
   try {
     localStorage.setItem(APP_VERSION_STORAGE_KEY, APP_VERSION);
+    return localStorage.getItem(APP_VERSION_STORAGE_KEY) === APP_VERSION;
   } catch {
-    // Gesperrter Speicher: Der nächste Start prüft die Version erneut.
+    // Gesperrter Speicher: Der Neustart ohne Vermerk würde sonst endlos neu laden.
+    return false;
   }
 }
+
+
+
 
 // Lädt die App-Dateien im Service-Worker-Cache frisch vom Netz (wie Strg+F5).
 // Ohne aktiven Service Worker holt der Browser ohnehin alles vom Netz.
@@ -50,6 +55,6 @@ export async function refreshFilesAfterUpdate(): Promise<void> {
   if (!(versionNumber(APP_VERSION) > versionNumber(stored))) return;
   if (!navigator.onLine) return;
   if (!(await refreshCachedFiles())) return;
-  rememberVersion();
+  if (!rememberVersion()) return;0
   window.location.reload();
 }

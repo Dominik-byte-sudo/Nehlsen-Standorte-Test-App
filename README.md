@@ -45,7 +45,7 @@ Technisch ist die App bewusst schlank gehalten: reines HTML, CSS und TypeScript 
 - **Standortdetails:** Adresse, Telefon, E-Mail und Öffnungszeiten. Das Detailfenster ist nicht modal, die Karte bleibt also bedienbar.
 - **Einstellungsrad:**
   - *Designstil:* Normal oder Liquid Glass (Untermenü).
-  - *Lokalen Speicher leeren:* Entfernt gespeicherte Einstellungen und alle Caches des Service Workers und lädt die Seite komplett neu, wie Strg+F5.
+  - *Lokalen Speicher leeren:* Fragt zuerst, ob nur die Einstellungen oder auch die Favoriten gelöscht werden sollen (oder Abbrechen). Danach werden alle Caches des Service Workers geleert und die Seite komplett neu geladen, wie Strg+F5.
 - **Hell- und Dunkelmodus:** Über den Schalter neben dem Einstellungsrad. Die Auswahl wird gespeichert.
 - **Sprache:** Standardmäßig folgt die App der Systemsprache (Deutsch, sonst Englisch). Im Einstellungsrad lässt sich unter „Sprache“ manuell Deutsch oder English wählen; die Auswahl wird gespeichert und wirkt sofort, auch im Koordinaten-Werkzeug.
 - **Koordinaten-Werkzeug:** Hilfsseite zum Prüfen und Korrigieren von Koordinaten (`koordinaten-werkzeug.html`).

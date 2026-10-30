@@ -36,8 +36,8 @@ function chooseDesign(design: DesignStyle): void {
 export function initDesign(): void {
   applyDesign(readSetting(DESIGN_STORAGE_KEY, DESIGN_STYLES, "normal"));
   onLanguageChange(() => applyDesign(currentDesign));
-  designMenuToggle.addEventListener("click", () => showSettingsPanel("design"));
-  designBack.addEventListener("click", () => showSettingsPanel("main"));
+  designMenuToggle.addEventListener("click", () => showSettingsPanel("design", true));
+  designBack.addEventListener("click", () => showSettingsPanel("main", true));
   designNormal.addEventListener("click", () => chooseDesign("normal"));
   designGlass.addEventListener("click", () => chooseDesign("glass"));
 }

@@ -40,9 +40,15 @@ export function saveStringSet(key, values) {
         toast(t("favoritesSaveFailed"));
     }
 }
-export function clearSettings() {
+export function clearSettings(keepKeys = []) {
     try {
+        const kept = keepKeys.flatMap((key) => {
+            const value = localStorage.getItem(key);
+            return value === null ? [] : [[key, value]];
+        });
         localStorage.clear();
+        for (const [key, value] of kept)
+            localStorage.setItem(key, value);
     }
     catch {
         // Gesperrter Speicher: Zwischenspeicher trotzdem leeren und neu laden.

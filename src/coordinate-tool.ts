@@ -61,14 +61,20 @@ function setState(location: ToolLocation, state: CheckState, message: StateMessa
 
 let progressMessage: StateMessage = { key: "toolProgressLoading" };
 
+function setZoomLabel(selector: string, label: string): void {
+  const button = document.querySelector(selector);
+  button?.setAttribute("title", label);
+  button?.setAttribute("aria-label", label);
+}
+
 function setProgress(message: StateMessage): void {
   progressMessage = message;
   progressElement.textContent = t(message.key, message.params);
 }
 
 onLanguageChange(() => {
-  document.querySelector(".leaflet-control-zoom-in")?.setAttribute("title", t("mapZoomIn"));
-  document.querySelector(".leaflet-control-zoom-out")?.setAttribute("title", t("mapZoomOut"));
+  setZoomLabel(".leaflet-control-zoom-in", t("mapZoomIn"));
+  setZoomLabel(".leaflet-control-zoom-out", t("mapZoomOut"));
   for (const location of records) drawItem(location);
   setProgress(progressMessage);
 });

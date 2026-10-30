@@ -172,6 +172,7 @@ await pointerClick("#mobileMenuToggle");
 await assert('document.querySelector("#mobileMenuToggle").getAttribute("aria-expanded") === "true" && getComputedStyle(document.querySelector("#themeDock")).display !== "none"', "The mobile settings pill did not open.");
 await pointerClick("#appearanceToggle");
 await assert('document.querySelector("#appearanceToggle").getAttribute("aria-expanded") === "true" && !document.querySelector("#appearanceMenu").classList.contains("hidden")', "The design wheel is covered by the open mobile detail sheet.");
+await pointerClick("#designMenuToggle");
 await pointerClick("#designGlass");
 await assert('document.documentElement.dataset.design === "glass" && localStorage.getItem("nehlsen-design") === "glass" && document.querySelector("#mobileMenuToggle").getAttribute("aria-expanded") === "false"', "Mobile Liquid Glass selection did not apply or close the settings pill.");
 const opticalGlass = await evaluate('({dockZ:getComputedStyle(document.querySelector("#themeDock")).zIndex,sheetFilter:getComputedStyle(document.querySelector("#sheet")).backdropFilter,menuFilter:getComputedStyle(document.querySelector("#appearanceMenu")).backdropFilter})');
@@ -183,6 +184,7 @@ await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: fal
   const fs = await import("node:fs/promises");
   await fs.writeFile("C:/Users/fkaempfe/AppData/Local/hermes/cache/scratch/nehlsen-mobile-glass-menu.png", Buffer.from(data, "base64"));
 });
+await pointerClick("#designMenuToggle");
 await pointerClick("#designNormal");
 await assert('document.documentElement.dataset.design === "normal" && localStorage.getItem("nehlsen-design") === "normal"', "The design wheel could not switch back to Normal on mobile.");
 await key("Escape");

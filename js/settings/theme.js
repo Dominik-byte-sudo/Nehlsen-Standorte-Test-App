@@ -58,8 +58,8 @@ export function initTheme() {
         setThemeSetting(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
         closeMobileMenu();
     });
-    themeMenuToggle.addEventListener("click", () => showSettingsPanel("theme"));
-    themeBack.addEventListener("click", () => showSettingsPanel("main"));
+    themeMenuToggle.addEventListener("click", () => showSettingsPanel("theme", true));
+    themeBack.addEventListener("click", () => showSettingsPanel("main", true));
     themeSystem.addEventListener("click", () => chooseTheme("system"));
     themeLight.addEventListener("click", () => chooseTheme("light"));
     themeDark.addEventListener("click", () => chooseTheme("dark"));

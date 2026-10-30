@@ -28,8 +28,8 @@ function chooseLanguage(setting: LanguageSetting): void {
 export function initLanguageSettings(): void {
   refresh();
   onLanguageChange(refresh);
-  languageMenuToggle.addEventListener("click", () => showSettingsPanel("language"));
-  languageBack.addEventListener("click", () => showSettingsPanel("main"));
+  languageMenuToggle.addEventListener("click", () => showSettingsPanel("language", true));
+  languageBack.addEventListener("click", () => showSettingsPanel("main", true));
   for (const option of languageOptions) {
     option.element.addEventListener("click", () => chooseLanguage(option.setting));
   }

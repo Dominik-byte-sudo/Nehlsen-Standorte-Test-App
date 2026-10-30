@@ -40,9 +40,14 @@ export function saveStringSet(key: string, values: Set<string>): void {
   }
 }
 
-export function clearSettings(): void {
+export function clearSettings(keepKeys: readonly string[] = []): void {
   try {
+    const kept = keepKeys.flatMap((key) => {
+      const value = localStorage.getItem(key);
+      return value === null ? [] : [[key, value] as const];
+    });
     localStorage.clear();
+    for (const [key, value] of kept) localStorage.setItem(key, value);
   } catch {
     // Gesperrter Speicher: Zwischenspeicher trotzdem leeren und neu laden.
   }

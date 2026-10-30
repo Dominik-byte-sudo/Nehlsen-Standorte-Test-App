@@ -512,6 +512,7 @@ html[data-theme="dark"] .marker-cluster-large { background: color-mix(in srgb, v
 .design-option:hover { background: var(--surface-soft); }
 .design-option[aria-pressed="true"] { border-color: var(--line); color: var(--accent-green); background: var(--soft-green); }
 .menu-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.clear-question { margin: 6px 12px 10px; color: var(--muted); font-size: 13px; line-height: 1.4; }
 .menu-row svg { flex: none; width: 16px; height: 16px; }
 .row-value { margin-left: auto; color: var(--muted); font-size: 13px; font-weight: 600; }
 .settings-panel { display: grid; gap: 5px; }

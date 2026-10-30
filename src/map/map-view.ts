@@ -5,11 +5,18 @@ declare const L: typeof import("leaflet");
 
 export const mapElement = byId<HTMLDivElement>("map");
 
+// Leaflet setzt title und aria-label aus den Startwerten; beide müssen bei einem Sprachwechsel mit.
+function setZoomLabel(selector: string, label: string): void {
+  const button = document.querySelector(selector);
+  button?.setAttribute("title", label);
+  button?.setAttribute("aria-label", label);
+}
+
 export const map = L.map(mapElement, { zoomControl: false }).setView([52.9, 10.5], 6);
 L.control.zoom({ position: "bottomright", zoomInTitle: t("mapZoomIn"), zoomOutTitle: t("mapZoomOut") }).addTo(map);
 onLanguageChange(() => {
-  document.querySelector(".leaflet-control-zoom-in")?.setAttribute("title", t("mapZoomIn"));
-  document.querySelector(".leaflet-control-zoom-out")?.setAttribute("title", t("mapZoomOut"));
+  setZoomLabel(".leaflet-control-zoom-in", t("mapZoomIn"));
+  setZoomLabel(".leaflet-control-zoom-out", t("mapZoomOut"));
 });
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,

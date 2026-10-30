@@ -30,11 +30,12 @@ class ElementMock {
   get isConnected() { return true; }
   getBoundingClientRect() { return { top: 100, left: 100, right: 900, bottom: 700 }; }
 }
-const ids = ["map", "list", "count", "q", "scopeFilter", "scopeToggle", "scopeValue", "scopeMenu", "scopeAll", "scopeFavorites", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "settingsMain", "designMenuToggle", "designValue", "designMenu", "designBack", "designNormal", "designGlass", "themeMenuToggle", "themeValue", "themeMenu", "themeBack", "themeSystem", "themeLight", "themeDark", "languageMenuToggle", "languageValue", "languageMenu", "languageBack", "languageAuto", "languageDe", "languageEn", "clearStorage"];
+const ids = ["map", "list", "count", "q", "scopeFilter", "scopeToggle", "scopeValue", "scopeMenu", "scopeAll", "scopeFavorites", "nearBtn", "sheet", "grab", "sClose", "sBody", "tMap", "tList", "toast", "themeToggle", "themeDock", "themeColor", "workspace", "viewControls", "mobileMenuToggle", "listToggle", "appearanceToggle", "appearanceMenu", "settingsMain", "designMenuToggle", "designValue", "designMenu", "designBack", "designNormal", "designGlass", "themeMenuToggle", "themeValue", "themeMenu", "themeBack", "themeSystem", "themeLight", "themeDark", "languageMenuToggle", "languageValue", "languageMenu", "languageBack", "languageAuto", "languageDe", "languageEn", "clearStorage", "clearMenu", "clearKeepFavorites", "clearAllData", "clearCancel"];
 const els = Object.fromEntries(ids.map((id) => [id, new ElementMock(id)]));
 els.clearStorage.dataset = { i18n: "clearStorage", i18nTitle: "clearStorageTitle" };
 els.designMenu.classList.add("hidden");
 els.languageMenu.classList.add("hidden");
+els.clearMenu.classList.add("hidden");
 els.workspace.classList = new Classes();
 els.appearanceMenu.classList.add("hidden");
 els.listToggle.setAttribute("aria-expanded", "true");
@@ -246,12 +247,16 @@ test("Clear Local Storage leert den lokalen Speicher und lädt die Seite neu", a
   assert.equal(els.clearStorage.textContent, "Clear local storage", "the label should follow the English system language");
   const reloadsBefore = globalThis.pageReloads ?? 0;
   onClear();
+  assert.equal(els.clearMenu.classList.contains("hidden"), false, "the clear button should first ask what to delete");
+  localStorage.setItem("nehlsen-favorites", JSON.stringify(["one"]));
+  els.clearKeepFavorites.listeners.click[0]();
   for (let attempt = 0; attempt < 20 && (globalThis.pageReloads ?? 0) === reloadsBefore; attempt += 1) {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
   assert.equal((globalThis.pageReloads ?? 0) - reloadsBefore, 1, "the page should reload exactly once");
   assert.equal(localStorage.getItem("nehlsen-theme"), null);
   assert.equal(localStorage.getItem("nehlsen-design"), null);
+  assert.equal(localStorage.getItem("nehlsen-favorites"), JSON.stringify(["one"]), "favorites survive when only settings are deleted");
 });
 
 test("Designstil öffnet als eigenes Untermenü und kehrt über Zurück ins Einstellungsmenü", () => {
@@ -334,5 +339,24 @@ test("Sprache lässt sich manuell auf Deutsch stellen, speichern und wieder auf 
   assert.equal(localStorage.getItem("nehlsen-language"), "auto");
   assert.equal(els.languageValue.textContent, "Automatic");
   assert.equal(els.count.textContent, "2 of 2 locations");
+});
+
+test("Lokalen Speicher leeren: Abbrechen lässt alles unverändert, Einstellungen und Favoriten löschen entfernt beides", async () => {
+  localStorage.setItem("nehlsen-theme", "light");
+  localStorage.setItem("nehlsen-favorites", JSON.stringify(["two"]));
+  els.clearStorage.listeners.click[0]();
+  els.clearCancel.listeners.click[0]();
+  assert.equal(els.clearMenu.classList.contains("hidden"), true, "cancel returns to the settings list");
+  assert.equal(localStorage.getItem("nehlsen-theme"), "light");
+
+  const reloadsBefore = globalThis.pageReloads ?? 0;
+  els.clearStorage.listeners.click[0]();
+  els.clearAllData.listeners.click[0]();
+  for (let attempt = 0; attempt < 20 && (globalThis.pageReloads ?? 0) === reloadsBefore; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  assert.equal((globalThis.pageReloads ?? 0) - reloadsBefore, 1);
+  assert.equal(localStorage.getItem("nehlsen-theme"), null);
+  assert.equal(localStorage.getItem("nehlsen-favorites"), null, "deleting everything also removes the favorites");
 });
 

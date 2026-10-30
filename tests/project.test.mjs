@@ -315,7 +315,7 @@ test("Der Logo-Asset hat transparenten Hintergrund und enthält nur die weiße W
   }
   assert.ok(transparent > 0, "background must be transparent");
   assert.ok(visible > 0, "wordmark must remain visible");
-  assert.match(sw, /const VERSION = "v48"/);
+  assert.match(sw, /const VERSION = "v50"/);
 });
 
 test("Karten-Zoomsteuerung ist in App und Werkzeug übersetzt", () => {

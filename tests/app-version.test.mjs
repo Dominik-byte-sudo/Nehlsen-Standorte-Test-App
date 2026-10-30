@@ -4,12 +4,16 @@ import test from "node:test";
 const store = new Map();
 let reloads = 0;
 let online = true;
+let failWrites = false;
 const navigatorMock = { languages: ["en-US"], language: "en-US" };
 Object.defineProperty(globalThis, "navigator", { value: navigatorMock, configurable: true });
 Object.defineProperty(navigatorMock, "onLine", { get: () => online, configurable: true });
 globalThis.localStorage = {
   getItem: (key) => store.get(key) ?? null,
-  setItem: (key, value) => store.set(key, String(value)),
+  setItem: (key, value) => {
+    if (failWrites) throw new Error("quota exceeded");
+    store.set(key, String(value));
+  },
   removeItem: (key) => store.delete(key),
   clear: () => store.clear(),
 };
@@ -26,6 +30,7 @@ function reset(stored) {
   store.clear();
   reloads = 0;
   online = true;
+  failWrites = false;
   if (stored !== undefined) store.set(KEY, stored);
 }
 
@@ -61,4 +66,12 @@ test("Offline bleibt die alte Version gespeichert, damit der nächste Start es e
   await refreshFilesAfterUpdate();
   assert.equal(reloads, 0);
   assert.equal(store.get(KEY), "v40");
+});
+
+test("Schlägt das Speichern der neuen Version fehl, wird bei jedem Start nicht erneut neu geladen", async () => {
+  reset("v40");
+  failWrites = true;
+  await refreshFilesAfterUpdate();
+  await refreshFilesAfterUpdate();
+  assert.equal(reloads, 0);
 });

@@ -1,7 +1,9 @@
 // Bump the version whenever a cached app asset changes.
-const VERSION = "v48";
-const APP_CACHE = `app-${VERSION}`;
-const TILE_CACHE = `tiles-${VERSION}`;
+const VERSION = "v50";
+const APP_CACHE = `nehlsen-app-${VERSION}`;
+const TILE_CACHE = `nehlsen-tiles-${VERSION}`;
+// Nur Caches dieser App: aktuelle Namen sowie die Altbestände vor der Umbenennung (app-vNN, tiles-vNN).
+const OWN_CACHE = /^(nehlsen-(app|tiles)-|(app|tiles)-v\d+$)/;
 const CORE = [
   "./",
   "./index.html",
@@ -64,7 +66,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
       .then((keys) => Promise.all(keys
-        .filter((key) => (key.startsWith("app-") && key !== APP_CACHE) || (key.startsWith("tiles-") && key !== TILE_CACHE))
+        .filter((key) => OWN_CACHE.test(key) && key !== APP_CACHE && key !== TILE_CACHE)
         .map((key) => caches.delete(key))))
       .then(() => self.clients.claim()),
   );
